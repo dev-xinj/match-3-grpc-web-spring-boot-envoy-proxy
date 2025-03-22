@@ -14,13 +14,13 @@ static_resources:
                   name: local_route
                   virtual_hosts:
                     - name: local_service
-                      domains: ["*"]
+                      domains: [ "*" ]
                       routes:
                         - match: { prefix: "/" }
                           route:
                             cluster: grpc_backend
                             timeout: 0s
-#                            prefix_rewrite: "/"  # Strip the /api prefix
+                            #                            prefix_rewrite: "/"  # Strip the /api prefix
                             max_stream_duration:
                               grpc_timeout_header_max: 0s
                       cors:
@@ -46,7 +46,7 @@ static_resources:
       connect_timeout: 0.25s
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
-      http2_protocol_options: {}  # Enable HTTP/2 for gRPC communication
+      http2_protocol_options: { }  # Enable HTTP/2 for gRPC communication
       load_assignment:
         cluster_name: grpc_backend
         endpoints:
@@ -54,7 +54,7 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: grpc-server  # Name of the gRPC server service in Docker Compose
+                      address: 10.200.200.181 #grpc-server  # Name of the gRPC server service in Docker Compose
                       port_value: 9090     # Port where gRPC server is running
 
     # Cluster for serving static files
@@ -69,5 +69,5 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: grpc-web-client  # Name of the client service in Docker Compose
-                      port_value: 8081          # Port where the Node.js server is serving static files
+                      address: 10.200.200.181 #grpc-web-client  # Name of the client service in Docker Compose
+                      port_value: 8081          # Port where the Spring boot server is serving static files

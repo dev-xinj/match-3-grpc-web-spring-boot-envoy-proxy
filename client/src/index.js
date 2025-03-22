@@ -1,30 +1,21 @@
 // Import the generated gRPC-Web client stubs and message classes
-import {SimpleClient} from './generated/hello_grpc_web_pb';
-import {HelloRequest} from './generated/hello_pb';
-
-// Create an instance of the Greeter client
-const client = new SimpleClient('http://localhost:8080');
-
-// Function to send a greeting request
-function sayHello(name) {
-    // Create a new request
-    const request = new HelloRequest();
-    request.setName(name);
-
-    // Call the sayHello method on the Greeter client
-    client.sayHello(request, {}, (err, response) => {
-        if (err) {
-            console.error('Error:', err.message);
-            document.getElementById('output').textContent = 'Error: ' + err.message;
-        } else {
-            console.log('Greeting:', response.getName());
-            document.getElementById('output').textContent = 'Reply ne: ' + response.getName();
-        }
-    });
-}
-
-// Example usage: sending a request when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const name = 'World';
-    sayHello(name);
-});
+// import { ItemServiceClient } from './generated/item_grpc_web_pb';
+import { Empty } from 'google-protobuf/google/protobuf/empty_pb';
+import { Matrix, RowItem, Item } from './generated/item_pb';
+import { Board } from './match3-game/index.js'
+import './css/style.css';
+import backgroundImage from './css/images/background/background_game.jpg';
+import callBoard, { clearMatrix, getCurrentMatrix } from './match3-game/index.js';
+document.body.style.backgroundImage = `url(${backgroundImage})`;
+let board = new Board();
+// document.addEventListener('DOMContentLoaded', async () => {
+//   await board.exportMatrix()
+// });
+window.onload = () => {
+  board.exportMatrix()
+};
+// document.addEventListener('click', async (e) => {
+//   // await new Promise(resolve => setTimeout(resolve, 2000));
+//   // let a = await scanMatrix(matrixService)
+//   // console.log(a);
+// })
