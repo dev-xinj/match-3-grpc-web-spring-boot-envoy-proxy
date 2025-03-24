@@ -36,11 +36,11 @@
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
-**/dist/
 **/node_modules/
 /nbdist/
 /.nb-gradle/
 build/
+!**/dist/
 !**/dist/images
 !**/src/main/**/build/
 !**/src/test/**/build/
