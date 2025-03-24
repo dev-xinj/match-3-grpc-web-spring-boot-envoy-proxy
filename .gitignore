@@ -40,7 +40,7 @@
 /nbdist/
 /.nb-gradle/
 build/
-!**/dist/
+**/dist/*
 !**/dist/images
 !**/src/main/**/build/
 !**/src/test/**/build/
