@@ -12,4 +12,6 @@ public interface BoardService {
     ItemModel[][] generateBoard();
 
     List<Match> scanBoard(ItemModel[][] itemModels);
+
+    List<Match> elementSwap(int row, int col, int key, ItemModel[][] itemModels);
 }

@@ -20,23 +20,26 @@ export default class MatrixServer {
         })
     }
 
-    #elementMatchResponse(row, col, key) {
+    #elementMatchResponse(row, col, key, matrix) {
         let swapRequest = new SwapRequest();
         swapRequest.setRow(row);
         swapRequest.setCol(col);
         swapRequest.setKey(key);
-
+        swapRequest.setMatrix(matrix);
+        let listMatches = [];
         const stream = this.#matrixConnection.elementMatches(swapRequest);
         return new Promise((resolve, reject) => {
-            stream.on('data', (axis) => {
-                console.log(axis)
+            stream.on('data', (message) => {
+                let axisList = message.toObject().pairsList;
+                listMatches.push(...this.convertToListMatches(axisList));
             })
             stream.on('end', () => {
-                console.log('stream ended')
-                resolve
+                console.log(listMatches);
+                resolve(listMatches);
             })
             stream.on('error', (error) => {
                 console.log(error)
+                reject(error);
 
             })
         })
@@ -64,25 +67,8 @@ export default class MatrixServer {
         return new Promise((resolve, reject) => {
             stream.on('data', (message) => {
                 let axisList = message.toObject().pairsList;
-                let size = listMatches.length;
-                if (!listMatches[size]) {
-                    listMatches[size] = {};
-                }
-                for (let pairs of axisList) {
-                    if (pairs.type == 1) {
-                        listMatches[size].x = pairs.pairsList.map(e => {
-                            return e.indexList;
-                        });
-                        listMatches[size].y;
-                    }
-                    if (pairs.type == 2) {
-                        listMatches[size].x;
-                        listMatches[size].y = pairs.pairsList.map(e => {
-                            return e.indexList;
-                        });
-                    }
-                }
-                console.log(message.toObject().pairsList);
+                listMatches.push(...this.convertToListMatches(axisList));
+                console.log(listMatches);
             })
             stream.on('error', (error) => {
                 console.log(error);
@@ -96,7 +82,28 @@ export default class MatrixServer {
         })
 
     }
-
+    convertToListMatches(axisList) {
+        let listMatches = [];
+        let size = listMatches.length;
+        if (!listMatches[size]) {
+            listMatches[size] = {};
+        }
+        for (let pairs of axisList) {
+            if (pairs.type == 1) {
+                listMatches[size].x = pairs.pairsList.map(e => {
+                    return e.indexList;
+                });
+                listMatches[size].y;
+            }
+            if (pairs.type == 2) {
+                listMatches[size].x;
+                listMatches[size].y = pairs.pairsList.map(e => {
+                    return e.indexList;
+                });
+            }
+        }
+        return listMatches;
+    }
     //public method
     async exportMatrix(request) {
         return await this.#newMatrix(request).then((result) => {
@@ -114,8 +121,9 @@ export default class MatrixServer {
         };
     }
 
-    elementMatchesRequest(row, col, key) {
-        this.#elementMatchResponse(row, col, key)
+    async elementMatchesRequest(row, col, key, matrix) {
+        let listMatches = await this.#elementMatchResponse(row, col, key, matrix)
+        return listMatches;
     }
 
 }

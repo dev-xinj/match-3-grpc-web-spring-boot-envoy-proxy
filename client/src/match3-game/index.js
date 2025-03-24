@@ -3,10 +3,7 @@ import Shape from "./shape.js";
 import MatrixServer from "../matrix_grpc_service"
 import { generateArrayItemsDefault } from './mockData.js';
 import { Empty } from "google-protobuf/google/protobuf/empty_pb.js";
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
 const Score = document.getElementById('score');
-const shape = new Shape();
 const ROWS = 10;
 const COLUMNS = 18;
 const BOX_SIZE = 40;
@@ -58,11 +55,10 @@ export class Board {
     #listMatches = [];
     #isVisited;
     #matrixServer;
-    constructor() {
+    constructor(ctx, shape) {
         this.ctx = ctx;
         this.#shape = shape;
-        // this.#items = this.#generateItems(items);
-        // this.#items = items;
+        this.BOX_SIZE = BOX_SIZE;
         this.#isVisited = this.#init();
         this.#score = 0;
         this.suggestes = [];
@@ -241,8 +237,8 @@ export class Board {
                         resolve();
                         return;
                     };
-                    ctx.clearRect(a * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-                    ctx.clearRect(b * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+                    this.ctx.clearRect(a * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+                    this.ctx.clearRect(b * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
 
                     k += speed;
                     drawBlock(numberAxis, k, a)
@@ -262,8 +258,8 @@ export class Board {
                         return;
                     };
 
-                    ctx.clearRect(numberAxis * BOX_SIZE, a * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-                    ctx.clearRect(numberAxis * BOX_SIZE, b * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+                    this.ctx.clearRect(numberAxis * BOX_SIZE, a * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+                    this.ctx.clearRect(numberAxis * BOX_SIZE, b * BOX_SIZE, BOX_SIZE, BOX_SIZE);
 
                     k += speed;
                     drawBlock(k, numberAxis, a)
@@ -284,7 +280,6 @@ export class Board {
     }
 
     #specialMatch(pre, pos) {
-
         let type;
         let results;
         if (this.#items[pre.row][pre.col].index != 0 && this.#items[pos.row][pos.col].index != 0) {
@@ -311,36 +306,49 @@ export class Board {
         }
 
         return new Promise(async (resolve, reject) => {
+            let matches = [[pre.row, pre.col], [pos.row, pos.col]];
             if (results && results.length) {
-                this.defaultItems(pre.row, pre.col)
-                this.defaultItems(pos.row, pos.col)
-                //remove
-                results = [...new Set(results.map(JSON.stringify))].map(JSON.parse);
-                await this.#dismissItems(results)
-                // data.forEach(item => {
-                //     results = results.concat(item);
-                // })
-                await new Promise(resolve => setTimeout(resolve, 300))
-
-                let sortArr = [...new Set(results.slice(1).sort((a, b) => a - b).flat())];
-                sortArr.forEach((e) => {
-                    this.moveDown(e, ROWS - 1);
-                })
-                await new Promise(resolve => setTimeout(resolve, 500))
-
-                while (this.queue.length) {
-                    let newData = [];
-                    newData = await this.removeDiamon(this.queue.shift());
+                try {
+                    this.defaultItems(pre.row, pre.col)
+                    this.defaultItems(pos.row, pos.col)
+                    //remove
+                    results = [...new Set(results.map(JSON.stringify))].map(JSON.parse);
+                    await this.#dismissItems(results)
                     await new Promise(resolve => setTimeout(resolve, 300))
-                    let sortArr = [...new Set(newData.slice(1).sort((a, b) => a - b).flat())];
+
+                    let sortArr = [...new Set(results.slice(1).sort((a, b) => a - b).flat())];
                     sortArr.forEach((e) => {
                         this.moveDown(e, ROWS - 1);
                     })
                     await new Promise(resolve => setTimeout(resolve, 500))
+
+                    while (this.queue.length) {
+                        let newData = [];
+                        newData = await this.removeDiamon(this.queue.shift());
+                        await new Promise(resolve => setTimeout(resolve, 300))
+                        let sortArr = [...new Set(newData.slice(1).sort((a, b) => a - b).flat())];
+                        sortArr.forEach((e) => {
+                            this.moveDown(e, ROWS - 1);
+                        })
+                        await new Promise(resolve => setTimeout(resolve, 500))
+                    }
+                    resolve()
+                } catch (error) {
+                    reject()
                 }
-                resolve(true)
+
             } else {
-                reject(false);
+                this.browseDiamon(matches).then(async (data) => {
+                    console.log(!data);
+                    if (!data) {
+                        await this.swap(matches)
+                        reject()
+                    } else {
+                        resolve()
+                    }
+                }).catch(() => {
+                    reject()
+                })
             }
         })
 
@@ -350,25 +358,12 @@ export class Board {
     async validSwap(pre, pos) {
         let matches = [[pre.row, pre.col], [pos.row, pos.col]];
         await this.swap(matches)
-        let isSwapBack;
-        try {
-            await this.#specialMatch(pre, pos)
-        } catch (error) {
-            await this.browseDiamon(matches)
-        }
-        // if (isLoop) {
-        //     await new Promise(resolve => setTimeout(resolve, 500));
-        //     // this.#init();
-        //     this.autoScan();
-        //     isSwapBack = false;
-        // } else {
-        //     isSwapBack = true;
-        // }
-        if (isSwapBack) {
-            // this.swapElement(pre, pos);
-            await this.swap(matches)
-            // this.#init();
-        }
+        this.#specialMatch(pre, pos).then(async () => {
+            console.log("into special")
+            await this.scan();
+        }).catch(() => {
+            console.log("Not Element Matches")
+        })
     }
     effectClick(col, row) {
         this.#items[row][col].color = COLOR_SELECTED;
@@ -838,7 +833,6 @@ export class Board {
             }
 
             promises.push(this.removeDiamon(newArr))
-            // promises.push(this.removeDiamon(newArr))
 
         };
         await Promise.all(promises).then(async (data) => {
@@ -852,11 +846,9 @@ export class Board {
                 this.moveDown(e, ROWS - 1);
             })
             await new Promise(resolve => setTimeout(resolve, 500))
-            // isLoop = true;
         })
         let newData = [];
         while (this.queue.length) {
-            // newData = newData.concat(await this.#dismissItems(this.queue.shift()))
             newData = await this.removeDiamon(this.queue.shift());
             await new Promise(resolve => setTimeout(resolve, 300))
             let sortArr = [...new Set(newData.flatMap(e => e.slice(1)).sort((a, b) => a - b).flat())];
@@ -864,7 +856,6 @@ export class Board {
                 this.moveDown(e, ROWS - 1);
             })
             await new Promise(resolve => setTimeout(resolve, 500))
-            // isLoop = true;
         }
     }
 
@@ -920,7 +911,6 @@ export class Board {
     }
 
     async browseDiamon(matches) {
-        // isLoop = false;
         let promises = []
         if (matches.length) {
             this.#refreshBoardVisited();
@@ -929,22 +919,37 @@ export class Board {
                 let row = matches[i][0]
                 let col = matches[i][1]
                 let key = this.#items[row][col].key;
-                promises.push(new Promise((resolve, reject) => {
-                    this.#elementMatch(row, col, key, this.#isVisited)
-
-                    resolve();
+                promises.push(new Promise(async (resolve, reject) => {
+                    // this.#elementMatch(row, col, key, this.#isVisited)
+                    this.elementMatchesRequest(row, col, key).then((data) => {
+                        console.log("into brow")
+                        resolve(data);
+                    })
                 }));
             }
         }
-        return Promise.all(promises).then(async () => {
+        this.#listMatches = [];
+        let isBreak;
+        return Promise.all(promises).then(async (data) => {
+            data.forEach(e => {
+                this.#listMatches.push(...e);
+            })
             if (this.#listMatches.length) {
-                try {
-                    await this.clearMatches(this.#listMatches);
+                await this.clearMatches(this.#listMatches).then(() => {
                     this.#refeshVisitedItems();
-                } catch (error) {
-
-                }
+                    console.log("into clearMs")
+                    isBreak = true;
+                }).catch(() => {
+                    isBreak = false;
+                });
+                console.log("into return isBreak")
+                return isBreak;
+            } else {
+                console.log("return else")
+                return false;
             }
+        }).catch(() => {
+            return false;
         })
     }
 
@@ -979,16 +984,16 @@ export class Board {
             this.callBoard(itemList, true);
             await this.drawBoard().then(async () => {
                 await new Promise(resolve => setTimeout(resolve, 700));
-                this.scan(this.#matrixServer);
+                this.scan();
             })
         }).catch((err) => {
             console.log(err)
         })
     }
-    async scanMatrix(matrixServer) {
+    async scanMatrix() {
         let itemList = this.#items;
-        let matrix = matrixServer.createMatrix(itemList);
-        return await matrixServer.scanMatrixRequest(matrix).then(async (result) => {
+        let matrix = this.#matrixServer.createMatrix(itemList);
+        return await this.#matrixServer.scanMatrixRequest(matrix).then(async (result) => {
             let listMatches = result.listMatches;
             await this.clearMatrix(listMatches);
             return result.isLoop;
@@ -997,11 +1002,22 @@ export class Board {
         })
     }
 
-    async scan(matrixServer) {
+    async elementMatchesRequest(row, col, key) {
+        let itemList = this.#items;
+        let matrix = this.#matrixServer.createMatrix(itemList);
+        try {
+            let listMatches = await this.#matrixServer.elementMatchesRequest(row, col, key, matrix);
+            return listMatches;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async scan() {
         let isLoop = false;
-        isLoop = await this.scanMatrix(matrixServer)
+        isLoop = await this.scanMatrix()
         while (isLoop) {
-            isLoop = await this.scanMatrix(matrixServer)
+            isLoop = await this.scanMatrix()
             console.log('loop')
         }
     }
@@ -1013,47 +1029,39 @@ export class Board {
         timeout = setTimeout(this.noClickDetected(), 5000); // 10000ms = 10 giây
     }
 
-}
-
-let preClicked;
-function playGame(e) {
-    var rect = canvas.getBoundingClientRect();
-    const mousePos = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-    };
-    // Tính toán chỉ số hàng và cột
-    var col = Math.floor(mousePos.x / BOX_SIZE); // Xác định cột
-    var row = Math.floor(mousePos.y / BOX_SIZE); // Xác định hàng
-    if (preClicked) {
-        let posClicked = board.effectClick(col, row);
-        let k = posClicked.row;
-        let l = posClicked.col;
-        board.items[preClicked.row][preClicked.col].color = COLOR;
-        board.items[posClicked.row][posClicked.col].color = COLOR;
-        if (((l == preClicked.col && (k <= preClicked.row + 1 && k >= preClicked.row - 1)) //kiểm tra vị trí nhấn. Không được chọn ô chéo
-            || (k == preClicked.row && l <= preClicked.col + 1 && l >= preClicked.col - 1))
-            && board.items[preClicked.row][preClicked.col].key != board.items[posClicked.row][posClicked.col].key) {//kiếm tra nếu 2 ô chọn giống thì chọn lại ô thứ 2
-            board.validSwap(preClicked, posClicked)
-            preClicked = null;
+    actionClick(preClicked, col, row) {
+        if (preClicked) {
+            let posClicked = this.effectClick(col, row);
+            let k = posClicked.row;
+            let l = posClicked.col;
+            this.items[preClicked.row][preClicked.col].color = COLOR;
+            this.items[posClicked.row][posClicked.col].color = COLOR;
+            if (((l == preClicked.col && (k <= preClicked.row + 1 && k >= preClicked.row - 1)) //kiểm tra vị trí nhấn. Không được chọn ô chéo
+                || (k == preClicked.row && l <= preClicked.col + 1 && l >= preClicked.col - 1))
+                && this.items[preClicked.row][preClicked.col].key != this.items[posClicked.row][posClicked.col].key) {//kiếm tra nếu 2 ô chọn giống thì chọn lại ô thứ 2
+                this.validSwap(preClicked, posClicked)
+                preClicked = null;
+            }
+            else if (preClicked.row == k && preClicked.col == l) { //trường hợp nhấn 1 ô 2 lần
+                this.drawDiamond(preClicked.col, preClicked.row, this.items[preClicked.row][preClicked.col]);
+                preClicked = null;
+            }
+            else {
+                this.drawDiamond(preClicked.col, preClicked.row, this.items[preClicked.row][preClicked.col]);
+                preClicked = posClicked;
+            }
+        } else {
+            if (this.drawSuggest.length) {
+                this.drawBoardSuggest(COLOR);
+            }
+            preClicked = this.effectClick(col, row);
         }
-        else if (preClicked.row == k && preClicked.col == l) { //trường hợp nhấn 1 ô 2 lần
-            board.drawDiamond(preClicked.col, preClicked.row, board.items[preClicked.row][preClicked.col]);
-            preClicked = null;
-        }
-        else {
-            board.drawDiamond(preClicked.col, preClicked.row, board.items[preClicked.row][preClicked.col]);
-            preClicked = posClicked;
-        }
-    } else {
-        if (board.drawSuggest.length) {
-            board.drawBoardSuggest(COLOR);
-        }
-        preClicked = board.effectClick(col, row);
+        return preClicked;
     }
 
-
 }
+
+
 
 function countSort(arr) {
     const count = new Array(BOX_SIZE + 1).fill(0);
@@ -1097,8 +1105,4 @@ function getMatch(arr) {
 
 
 
-canvas.addEventListener('click', (e) => {
-    // playGame(e)
-    resetTimer();
-});
 

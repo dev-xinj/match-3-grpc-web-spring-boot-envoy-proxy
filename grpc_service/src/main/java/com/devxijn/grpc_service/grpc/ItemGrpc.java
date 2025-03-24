@@ -71,25 +71,30 @@ public class ItemGrpc extends ItemServiceGrpc.ItemServiceImplBase {
         });
         responseObserver.onCompleted();
 
-//        for (int i = 0; i < matchesPairs.size(); i++) {
-//            if (matchesPairs.get(i).getPairsX() != null) { //danh sach trung hang ngang
-//                Pairs pairs = Pairs.newBuilder()
-//                        .setType(TYPE.HORIZONTAL)
-////                        .addAllPairs(pair1.getPairsList())
-//                        .addAllPairs(matchesPairs.get(i).getPairsX())
-//                        .build();
-//                responseObserver.onNext(pairs);
-//            }
-//            if (matchesPairs.get(i).getPairsY() != null) { //danh sach trung hang doc
-//                Pairs pairs = Pairs.newBuilder()
-//                        .setType(TYPE.VERTICAL)
-//                        .addAllPairs(pair1.getPairsList())
-////                        .addAllPairs(matchesPairs.get(i).getPairsY().getPairsList())
-//                        .build();
-//                responseObserver.onNext(pairs);
-//            }
-//        }
-
     }
 
+    @Override
+    public void elementMatches(SwapRequest request, StreamObserver<Axis> responseObserver) {
+        ItemModel[][] itemModels = new ItemModel[10][18];
+        int length = request.getMatrix().getRowItemList().size();
+        for (int i = 0; i < length; i++) {
+            List<Item> items = request.getMatrix().getRowItemList().get(i).getItemList();
+            int lengthRows = items.size();
+            for (int j = 0; j < lengthRows; j++) {
+                itemModels[i][j] = new ItemModel();
+                itemModels[i][j].setIndex(items.get(j).getIndex());
+                itemModels[i][j].setKey(items.get(j).getKey());
+                itemModels[i][j].setVisited(items.get(j).getIsVisited());
+                itemModels[i][j].setNew(items.get(j).getIsNew());
+                itemModels[i][j].setQueue(items.get(j).getIsQueue());
+
+            }
+        }
+        List<Match> matchesPairs = boardService.elementSwap(request.getRow(), request.getCol(), request.getKey(), itemModels);
+        matchesPairs.forEach(e -> {
+            Axis axis = PairsConvert.toAxisGrpc(e);
+            responseObserver.onNext(axis);
+        });
+        responseObserver.onCompleted();
+    }
 }

@@ -67,6 +67,17 @@ public class BoardServiceImpl implements BoardService {
 
     }
 
+    @Override
+    public List<Match> elementSwap(int row, int col, int key, ItemModel[][] itemModels) {
+        boolean[][] isVisited = initVisited();
+        List<Match> matches = new ArrayList<>();
+        Match match = elementMatch(row, col, key, itemModels, isVisited);
+        if (!Objects.isNull(match.getPairsX()) || !Objects.isNull(match.getPairsY())) {
+            matches.add(match);
+        }
+        return matches;
+    }
+
     public void scanAllBoard(int key, boolean[][] isVisited, ItemModel[][] itemModels, List<Match> matches) {
         for (int i = 0; i < ROW; i++) {
             for (int j = 0; j < COL; j++) {

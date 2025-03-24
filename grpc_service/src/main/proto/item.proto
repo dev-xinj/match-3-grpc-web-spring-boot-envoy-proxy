@@ -34,6 +34,7 @@ message SwapRequest{
   int32 row = 1;
   int32 col = 2;
   int32 key = 3;
+  Matrix matrix = 4;
 }
 service ItemService{
 
@@ -41,5 +42,5 @@ service ItemService{
 
   rpc scanMatrix(Matrix) returns (stream Axis){} //trả về cặp giá trị để client swap và remove element
 
-  rpc elementMatches(SwapRequest) returns (Axis){}
+  rpc elementMatches(SwapRequest) returns (stream Axis){}
 }

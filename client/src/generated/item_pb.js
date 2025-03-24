@@ -1290,7 +1290,8 @@ proto.SwapRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 row: jspb.Message.getFieldWithDefault(msg, 1, 0),
 col: jspb.Message.getFieldWithDefault(msg, 2, 0),
-key: jspb.Message.getFieldWithDefault(msg, 3, 0)
+key: jspb.Message.getFieldWithDefault(msg, 3, 0),
+matrix: (f = msg.getMatrix()) && proto.Matrix.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -1338,6 +1339,11 @@ proto.SwapRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 3:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setKey(value);
+      break;
+    case 4:
+      var value = new proto.Matrix;
+      reader.readMessage(value,proto.Matrix.deserializeBinaryFromReader);
+      msg.setMatrix(value);
       break;
     default:
       reader.skipField();
@@ -1387,6 +1393,14 @@ proto.SwapRequest.serializeBinaryToWriter = function(message, writer) {
     writer.writeInt32(
       3,
       f
+    );
+  }
+  f = message.getMatrix();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.Matrix.serializeBinaryToWriter
     );
   }
 };
@@ -1443,6 +1457,43 @@ proto.SwapRequest.prototype.getKey = function() {
  */
 proto.SwapRequest.prototype.setKey = function(value) {
   return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * optional Matrix matrix = 4;
+ * @return {?proto.Matrix}
+ */
+proto.SwapRequest.prototype.getMatrix = function() {
+  return /** @type{?proto.Matrix} */ (
+    jspb.Message.getWrapperField(this, proto.Matrix, 4));
+};
+
+
+/**
+ * @param {?proto.Matrix|undefined} value
+ * @return {!proto.SwapRequest} returns this
+*/
+proto.SwapRequest.prototype.setMatrix = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.SwapRequest} returns this
+ */
+proto.SwapRequest.prototype.clearMatrix = function() {
+  return this.setMatrix(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.SwapRequest.prototype.hasMatrix = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

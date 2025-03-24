@@ -200,7 +200,7 @@ proto.ItemServicePromiseClient.prototype.scanMatrix =
  */
 const methodDescriptor_ItemService_elementMatches = new grpc.web.MethodDescriptor(
   '/ItemService/elementMatches',
-  grpc.web.MethodType.UNARY,
+  grpc.web.MethodType.SERVER_STREAMING,
   proto.SwapRequest,
   proto.Axis,
   /**
@@ -215,37 +215,32 @@ const methodDescriptor_ItemService_elementMatches = new grpc.web.MethodDescripto
 
 
 /**
- * @param {!proto.SwapRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
+ * @param {!proto.SwapRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.Axis)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.Axis>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.Axis>}
  *     The XHR Node Readable Stream
  */
 proto.ItemServiceClient.prototype.elementMatches =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
       '/ItemService/elementMatches',
       request,
       metadata || {},
-      methodDescriptor_ItemService_elementMatches,
-      callback);
+      methodDescriptor_ItemService_elementMatches);
 };
 
 
 /**
- * @param {!proto.SwapRequest} request The
- *     request proto
+ * @param {!proto.SwapRequest} request The request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.Axis>}
- *     Promise that resolves to the response
+ * @return {!grpc.web.ClientReadableStream<!proto.Axis>}
+ *     The XHR Node Readable Stream
  */
 proto.ItemServicePromiseClient.prototype.elementMatches =
     function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
+  return this.client_.serverStreaming(this.hostname_ +
       '/ItemService/elementMatches',
       request,
       metadata || {},
