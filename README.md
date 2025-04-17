@@ -1,3 +1,5 @@
+# Overview
+![game1.png](docs/game1.png)
 # Project Structure
 - **client/**: Contains the gRPC-Web client code.
 - **grpc_service/**: Contains the gRPC server code written in Spring Boot.
