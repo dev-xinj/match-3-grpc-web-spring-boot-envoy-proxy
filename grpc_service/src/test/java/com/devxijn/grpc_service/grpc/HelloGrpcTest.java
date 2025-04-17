@@ -1,4 +1,4 @@
-package com.devxijn.grpc_service.service;
+package com.devxijn.grpc_service.grpc;
 
 import com.devxijn.grpc_service.entity.HelloReply;
 import com.devxijn.grpc_service.entity.HelloRequest;
@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class HelloServiceTest {
+public class HelloGrpcTest {
     @Rule
     public final GrpcCleanupRule grpcCleanup = new GrpcCleanupRule();
 
@@ -24,7 +24,7 @@ public class HelloServiceTest {
     public void greet_shouldReturnHello() throws Exception {
         // Arrange
         String name = "World";
-        HelloService service = new HelloService();
+        HelloGrpc service = new HelloGrpc();
         String serverName = InProcessServerBuilder.generateName();
 
         grpcCleanup.register(InProcessServerBuilder

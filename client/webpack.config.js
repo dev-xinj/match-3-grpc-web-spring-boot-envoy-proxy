@@ -9,6 +9,7 @@ module.exports = {
         publicPath: '/',  // Ensures correct URLs in generated HTML
     },
     mode: 'development',
+    devtool: 'source-map',
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html',  // Generates index.html in dist
@@ -32,6 +33,22 @@ module.exports = {
                         presets: ['@babel/preset-env'],
                     },
                 },
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.(png|jpg|gif)$/i,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: '[name].[ext]',
+                            outputPath: 'images/background', // Lưu ảnh vào thư mục images
+                        },
+                    },
+                ],
             },
         ],
     },
