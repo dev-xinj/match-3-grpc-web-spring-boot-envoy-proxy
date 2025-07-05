@@ -981,7 +981,7 @@ export class Board {
             let itemList = result.map((row) => {
                 return row.itemList;
             });
-            this.callBoard(itemList, true);
+            this.callBoard(itemList, false);
             await this.drawBoard().then(async () => {
                 await new Promise(resolve => setTimeout(resolve, 700));
                 this.scan();
@@ -992,7 +992,7 @@ export class Board {
     }
     async scanMatrix() {
         let itemList = this.#items;
-        let matrix = this.#matrixServer.createMatrix(itemList);
+        let matrix = this.#matrixServer.createMatrix(itemList); //convert to Matrix defined in file .proto
         return await this.#matrixServer.scanMatrixRequest(matrix).then(async (result) => {
             let listMatches = result.listMatches;
             await this.clearMatrix(listMatches);
