@@ -1,0 +1,32 @@
+/* Container cho game và các phần tử con */
+.game {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.canvas-frame {
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.score-box {
+    font-weight: 900;
+    font-size: 50px;
+    margin-bottom: 20px;
+    color: #0744b6;
+}
+
+#canvas {
+    background-position: center center;
+    background-color: #e3e3e3;
+    border: 2px solid #333;
+    box-sizing: border-box;
+}
