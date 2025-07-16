@@ -1,20 +1,16 @@
-import { config } from "../constants/config";
+import { config, source } from "../constants/config";
+import { baseTypes, SPECIAL, types } from "../constants/types";
 import { generateArrayCellsDefault } from "../example/mockCell";
-import { SPECIAL, types } from "../constants/types";
 import { Attribute, Cell } from "./Cell";
-import { source } from "../constants/config";
-
-let dx = [-1, 1]; //trên dưới đảo ngược dx dy là trái phải
-let dy = [0, 0];
-
+import { getRandomInt } from '../utils/common.js'
 export class Board {
-    constructor(ROWS, COLUMNS, isMock = false) {
-        this.cells = !isMock ? Array.from({ length: ROWS }, (_, i) =>
-            Array.from({ length: COLUMNS }, (_, j) => this.#initFn(i, j))
+    constructor(rows, columns, isMock = false) {
+        this.cells = !isMock ? Array.from({ length: rows }, (_, i) =>
+            Array.from({ length: columns }, (_, j) => this.#initFn(i, j))
         ) : generateArrayCellsDefault();
     }
     #initFn() {
-        return new Cell(this.getRandomInt(source.MAP_SRC_IMG.length - 1), 0, false, false, types.NORMAL, false, new Attribute(config.COLOR.default, config.COLOR.border));
+        return new Cell(getRandomInt(source.MAP_SRC_IMG.length - 1), 0, false, false, types.NORMAL, false, new Attribute(config.COLOR.default, config.COLOR.border));
     }
     getCell(i, j) {
         return this.cells[i][j];
@@ -26,7 +22,35 @@ export class Board {
     setCell(i, j, value) {
         this.cells[i][j] = value
     }
-    getRandomInt(max) {
-        return Math.floor(Math.random() * (max - 1)) + 1;
+
+
+    swap(a, b) {
+        const temp = this.cells[a.row][a.col]
+        this.cells[a.row][a.col] = this.cells[b.row][b.col]
+        this.cells[b.row][b.col] = temp
     }
+
+    
+
+
+    findMatchAt() {
+        return false;
+    }
+    refeshVisitedItems() {
+        this.cells.map(elements => {
+            return elements.map(cell => {
+                cell.isVisited ? cell.isVisited = false : cell
+                cell.isNew ? cell.isNew = false : cell
+            })
+        })
+    }
+
+    defineSpecial(row, col, colorBorder, match) {
+        this.cells[row][col].index = match;
+        this.cells[row][col].type = match == SPECIAL ? types[baseTypes[4]] : types[baseTypes[match]];
+        this.cells[row][col].isNew = true;
+        this.cells[row][col].colorBorder = colorBorder;
+    }
+
+
 }

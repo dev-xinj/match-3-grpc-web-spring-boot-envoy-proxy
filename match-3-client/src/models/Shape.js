@@ -23,4 +23,8 @@ export default class Shape {
     get(key, index = 0) {
         return this.images[source.MAP_SRC_IMG[key]]?.[index] || null
     }
+
+    length(){
+        return this.images.length;
+    }
 }
