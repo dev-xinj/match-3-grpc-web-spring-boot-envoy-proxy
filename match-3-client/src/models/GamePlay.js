@@ -6,6 +6,11 @@ export class GamePlay {
         this.firstPick = null;
         this.listMatches = [];
     }
+
+    play(){
+        this.boardRender.loadAll();
+    }
+
     handlePick(x, y) {
         const { boardRender } = this
         const col = Math.floor(x / config.ATTRIBUTE.boxSize)
@@ -13,7 +18,7 @@ export class GamePlay {
         const pick = { row, col };
         if (!this.firstPick) {
             this.firstPick = pick;
-            boardRender?.click(this.firstPick.row, this.firstPick.col)
+            boardRender?.click(this.firstPick, null)
             return 'SELECTED'
         }
         if (this.#isAdjacent(this.firstPick, pick)) {
@@ -29,20 +34,22 @@ export class GamePlay {
             })
 
         } else {
+            boardRender?.click(pick, this.firstPick)
             this.firstPick = pick;
             return 'SECONDPICK'
         }
     }
 
     #isAdjacent(primary, second) {
-        return (Math.abs(primary.row - second.row) + Math.abs(primary.col - second.col)) === 1;
+        return (Math.abs(primary.row - second.row) + Math.abs(primary.col - second.col)) === 1 && this.boardRender.isAdjacent(primary, second);
     }
 
     #swap(primary, second) {
         this.boardRender.board.swap(primary, second);
     }
     async #swapEffect(primary, second) {
-        await this.boardRender.swapEffect(primary, second);
+        let matches = [[primary.row, primary.col], [second.row, second.col]];
+        await this.boardRender.swapEffect(matches);
     }
     mapSpecialShapes(matches, match) {
         const { boardRender } = this

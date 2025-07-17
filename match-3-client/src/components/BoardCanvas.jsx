@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react"
 import { Board } from "../models/Board"
 import { BoardRenderer } from "../models/BoardRenderer"
 import { GamePlay } from "../models/GamePlay";
+import { MatrixService } from "../services/MatrixService";
 
 const BoardCanvas = ({ config }) => {
     const { row, column } = config;
@@ -11,10 +12,11 @@ const BoardCanvas = ({ config }) => {
         const ctx = canvasRef.current.getContext('2d')
         const canvas = canvasRef.current;
         const board = new Board(row, column, true); //mockup data contructor = true
-
-        const renderer = new BoardRenderer(board, ctx)
-        renderer.loadAll();
+        const matrixService = new MatrixService();
+        const renderer = new BoardRenderer(board, ctx,matrixService)
+               
         const gamePlay = new GamePlay(renderer);
+        gamePlay.play();
         const handleClick = (e) => {
             const rect = canvas.getBoundingClientRect()
             const mouseX = e.clientX - rect.left

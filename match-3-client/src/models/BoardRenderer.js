@@ -5,111 +5,151 @@ import Shape from "./Shape"
 
 const BOX_SIZE = config.ATTRIBUTE.boxSize
 export class BoardRenderer {
-    constructor(board, ctx) {
+    constructor(board, ctx, matrixService) {
         this.board = board
         this.ctx = ctx
+        this.matrixService = matrixService
         this.cellSize = BOX_SIZE
         this.queue = []
     }
-
-    swapEffect = (matches) => {
-        return new Promise((resolve) => {
-
-            let a;
-            let b;
-            let axis;
-            let numberAxis;
-            if (matches.length) {
-                if (matches[0][0] == matches[1][0]) {
-                    axis = "HORIZONTAL";
-                    numberAxis = matches[0][0];
-                    a = Math.min(matches[0][1], matches[1][1]) //col
-                    b = Math.max(matches[0][1], matches[1][1])  //col
-                } else if (matches[0][1] == matches[1][1]) {
-                    axis = "VERTICAL";
-                    numberAxis = matches[0][1];
-                    a = Math.min(matches[0][0], matches[1][0]) //row
-                    b = Math.max(matches[0][0], matches[1][0]) //row
-                }
-            }
-
-            let speed = 0.09;
-            let isAnimating = (k, l) => {
-                if (k >= b && l <= a) {
-                    return false;
-                } else {
-                    return true;
-                }
+    isAdjacent(primary, second) {
+        const { board } = this
+        return board.cells[primary.row][primary.col].key !== board.cells[second.row][second.col].key
+    }
+    _getSwapAxisInfo(pairPick) {
+        const [first, second] = pairPick; //cặp giá trị 2 ô chọn swap [[2,3],[2,4]]
+        if (first[0] === second[0]) { //kiểm tra nếu row của ô 1 = row của ô 2 thì nó là hàng ngang
+            return {
+                axis: 'HORIZONTAL',
+                numberAxis: first[0], //trục bắt đầu swap
+                a: Math.min(first[1], second[1]), //min
+                b: Math.max(first[1], second[1])    // max
+                //max và min sẽ là điểm bắt đầu và điểm kết thúc để swap với effect
             };
-            let drawBlock = (x, y, i) => {
-                let src;
-                if (axis == 'HORIZONTAL') {
-                    src = this.imgMgr.get(this.cells[Math.floor(x)][Math.floor(i)].key, this.cells[Math.floor(x)][Math.floor(i)].index);
-                } else if (axis == 'VERTICAL') {
-                    src = this.imgMgr.get(this.cells[Math.floor(i)][Math.floor(y)].key, this.cells[Math.floor(i)][Math.floor(y)].index);
+        } else {
+            return {
+                axis: 'VERTICAL',
+                numberAxis: first[1],
+                a: Math.min(first[0], second[0]),
+                b: Math.max(first[0], second[0])
+            };
+        }
+    }
+
+    _swapCells(pairPick) {
+        const [first, second] = pairPick;
+        const [row1, col1] = first;
+        const [row2, col2] = second;
+        let temp = this.board.cells[row1][col1];
+        this.board.cells[row1][col1] = this.board.cells[row2][col2];
+        this.board.cells[row2][col2] = temp;
+    }
+    _drawCellAndImage(row, col, cell) {
+        this.drawCell(row, col, cell);
+        this.drawImage(row, col, cell);
+    }
+    _swapCellsAndRedraw(axis, numberAxis, a, b) {
+        //numberAxis là trục chính, đại diện cho cột nếu Vertical, và dòng nếu horizontal
+        if (axis === 'HORIZONTAL') {
+            console.log(axis)
+            this._swapCells([[numberAxis, a], [numberAxis, b]]);
+            this._drawCellAndImage(numberAxis, a, this.board.cells[numberAxis][a]);
+            this._drawCellAndImage(numberAxis, b, this.board.cells[numberAxis][b]);
+        } else {
+            console.log(axis)
+            this._swapCells([[a, numberAxis], [b, numberAxis]]);
+            this._drawCellAndImage(a, numberAxis, this.board.cells[a][numberAxis]);
+            this._drawCellAndImage(b, numberAxis, this.board.cells[b][numberAxis]);
+        }
+    }
+    clearStyleCell(row, col) {
+        this.board.cells[row][col].attribute.color = config.COLOR.default
+        this.ctx.clearRect(col * BOX_SIZE, row * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+    }
+    _getSwapImage = (x, y, entry, axis) => {
+        /* 
+            x, y: trục hiện tại khi đang chuyển động swap
+            entry: vị vị trí ban đầu
+        */
+        let row = axis === 'HORIZONTAL' ? Math.floor(x) : Math.floor(entry);
+        let col = axis === 'HORIZONTAL' ? Math.floor(entry) : Math.floor(y);
+        let cell = this.board.cells[row][col];
+        return this.imgMgr.get(cell.key, cell.index);
+    }
+    swapEffect = (pairPick) => {
+        return new Promise((resolve) => {
+            if (!pairPick || pairPick.length < 2) return resolve();
+            const { a, b, axis, numberAxis } = this._getSwapAxisInfo(pairPick);
+            let speed = 0.09; //tốc độ
+            let k = a, l = b;
+            // k và l sẽ là điểm tạm thời để nó bắt đầu tiến dần về giá trị còn lại
+
+            let draw = () => {
+                const isAnimated = k < b || l > a; //kiểm tra nếu k chưa tiến về b (max) hoặc l chưa tiến về a (min)
+                if (!isAnimated) { //nếu true tạo chuyển động swap
+                    this._swapCellsAndRedraw(axis, numberAxis, a, b);
+                    resolve();
+                    return;
                 }
-                this.ctx.drawImage(src, y * BOX_SIZE, x * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-            }
-            let isAnimated = isAnimating(a, b);
-            let draw = (k, l) => {
-                if (axis == 'HORIZONTAL') {
-                    if (!isAnimated) {
-                        let temp = this.cells[numberAxis][a];
-                        this.cells[numberAxis][a] = this.cells[numberAxis][b];
-                        this.drawCell(a, numberAxis, this.cells[numberAxis][a]);
-                        this.cells[numberAxis][b] = temp;
-                        this.drawCell(b, numberAxis, this.cells[numberAxis][b]);
-                        resolve();
-                        return;
-                    };
-                    this.ctx.clearRect(a * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-                    this.ctx.clearRect(b * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+                //tốc độ vẽ và xóa để tạo ra hiệu ứng chuyển động
+                k += speed;
+                l -= speed;
+                this._drawSwapFrame(k, l, a, b, axis, numberAxis);
+                requestAnimationFrame(draw);
+            };
 
-                    k += speed;
-                    drawBlock(numberAxis, k, a)
-                    // this.drawDiamond(k, numberAxis, this.cells[numberAxis][k]);
-                    l -= speed;
-                    drawBlock(numberAxis, l, b)
-                    // this.drawDiamond(l, numberAxis, this.cells[numberAxis][l]);
-
-                } else if (axis == 'VERTICAL') {
-                    if (!isAnimated) {
-                        let temp = this.cells[a][numberAxis];
-                        this.cells[a][numberAxis] = this.cells[b][numberAxis];
-                        this.drawCell(numberAxis, a, this.cells[a][numberAxis]);
-                        this.cells[b][numberAxis] = temp;
-                        this.drawCell(numberAxis, b, this.cells[b][numberAxis]);
-                        resolve();
-                        return;
-                    };
-
-                    this.ctx.clearRect(numberAxis * BOX_SIZE, a * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-                    this.ctx.clearRect(numberAxis * BOX_SIZE, b * BOX_SIZE, BOX_SIZE, BOX_SIZE);
-
-                    k += speed;
-                    drawBlock(k, numberAxis, a)
-                    // this.drawDiamond(numberAxis, k, this.cells[k][numberAxis]);
-                    l -= speed;
-                    drawBlock(l, numberAxis, b)
-                    // this.drawDiamond(numberAxis, l, this.cells[l][numberAxis]);
-                }
-                if (isAnimated) {
-                    requestAnimationFrame(() => { draw(k, l) });
-                }
-                isAnimated = isAnimating(k, l);
-            }
-            draw(a, b);
+            draw();
         })
 
-
     }
+
+    _drawSwapFrame(k, l, a, b, axis, numberAxis) {
+        /* 
+         *   k, l: tọa độ mới
+         *   a,b (min,max) : tọa độ ban đầu
+         *   axis: trục
+         *   numberAxis: vị trí tại trục tương ứng
+        */
+        if (axis === 'HORIZONTAL') {
+            this.clearStyleCell(numberAxis, a)
+            this.clearStyleCell(numberAxis, b)
+            let srcImgPrimary = this._getSwapImage(numberAxis, k, a, axis)
+            let srcImgSecond = this._getSwapImage(numberAxis, l, b, axis)
+            this.ctx.drawImage(srcImgPrimary, k * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+            this.ctx.drawImage(srcImgSecond, l * BOX_SIZE, numberAxis * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+        } else {
+            this.clearStyleCell(a, numberAxis)
+            this.clearStyleCell(b, numberAxis)
+            let srcImgPrimary = this._getSwapImage(k, numberAxis, a, axis)
+            let srcImgSecond = this._getSwapImage(l, numberAxis, b, axis)
+            this.ctx.drawImage(srcImgPrimary, numberAxis * BOX_SIZE, k * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+            this.ctx.drawImage(srcImgSecond, numberAxis * BOX_SIZE, l * BOX_SIZE, BOX_SIZE, BOX_SIZE);
+        }
+    }
+
     loadAll() {
         this.imgMgr = new Shape(source.SOURCE_IMG) //generate image for cell;
         this.imgMgr.loadAll().then(() => {
             this.draw();
         })
+        return this._scanBoard();
     }
+    _scanBoard() {
+        const { board } = this;
+        let cells = board.cells;
+        let matrix = this.matrixService.convertCellsToMatrix(cells); //convert to Matrix defined in file .proto
+        return this.matrixService.scanMatrixRequest(matrix).then(async (result) => {
+            // let listMatches = result.listMatches;
+            // await this.clearMatrix(listMatches);
+            // return result.isLoop;
+            return { 
+                matches: result.listMatches, 
+                isLoop: result.isLoop }
+        }).catch((err) => {
+            throw err;
+        })
 
+    }
     draw() {
         const { ctx, board } = this
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
@@ -118,29 +158,40 @@ export class BoardRenderer {
         for (let i = 0; i < row; i++) {
             for (let j = 0; j < column; j++) {
                 const cell = board.getCell(i, j);
-                this.drawCell(i, j, cell.attribute.color, cell.attribute.colorBorder);
-                this.drawImage(i, j, cell);
+
+                this.fillCell(i, j, cell);
+                // this.drawImage(i, j, cell);
             }
         }
     }
-    drawCell(i, j, color, colorBorder) {
+    fillCell(row, col, cell) {
+        this.drawCell(row, col, cell);
+        this.drawImage(row, col, cell);
+    }
+    drawCell(i, j, cell) {
         const { ctx, cellSize } = this;
-        ctx.fillStyle = color;
+        ctx.fillStyle = cell.attribute.color;
         ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize)
         ctx.lineWidth = 3;
         ctx.globalAlpha = 1.0;
-        ctx.strokeStyle = colorBorder;
+        ctx.strokeStyle = cell.attribute.colorBorder;
         ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize);
 
     }
 
-    click(row, col) {
+    click(primary, second) {
+        const { row, col } = primary;
         const { board } = this
-        this.drawCell(row, col, config.COLOR.selected, config.COLOR.border);
         const cell = board.getCell(row, col);
-        this.drawImage(row, col, cell);
+        cell.attribute.color = config.COLOR.selected
+        this.fillCell(row, col, cell);
+        if (second != null) {
+            const cell = board.getCell(second.row, second.col);
+            cell.attribute.color = config.COLOR.default
+            this.fillCell(second.row, second.col, cell);
+        }
+        // this.drawImage(row, col, cell);
 
-        console.log('click: ', row, col)
     }
 
     drawImage(row, col, cell) {
@@ -160,7 +211,7 @@ export class BoardRenderer {
         let row = matches[0][0];
         let col = matches[0][1];
         board.defineSpecial(row, col, matches.colorBorder, match);
-        // this.cells[row][col].color = COLOR;
+        // this.board.cells[row][col].color = COLOR;
         this.drawSpecial(row, col, board.cells[row][col])
     }
     fadeAndShrinkEffect(col, row, fadeSpeed, shrinkRate, originalSize) {
@@ -189,7 +240,7 @@ export class BoardRenderer {
         let matches = [];
         for (let i = 0; i < config.ATTRIBUTE.row; i++) {
             for (let j = 0; j < config.ATTRIBUTE.column; j++) {
-                if (this.cells[i][j].key == preKey)
+                if (this.board.cells[i][j].key == preKey)
                     matches.push([i, j]);
             }
         }
@@ -203,8 +254,8 @@ export class BoardRenderer {
         this.queue = [...new Set(this.queue.map(JSON.stringify))].map(JSON.parse);
     }
     fadeAndClearCell(row, col) {
-        const cell = this.cells[row][col];
-        const fadePromise = this.boardRender.fadeAndShrinkEffect(col, row, 0.1, 5, config.ATTRIBUTE.boxSize);
+        const cell = this.board.cells[row][col];
+        const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, config.ATTRIBUTE.boxSize);
 
         cell.key = 0;
         cell.index = 0;
@@ -212,7 +263,7 @@ export class BoardRenderer {
         cell.color = config.COLOR.default;
         cell.isQueue = false;
 
-        this.boardRender.drawSpecial(col, row, cell);
+        this.drawSpecial(col, row, cell);
         return fadePromise;
     }
 
@@ -244,7 +295,7 @@ export class BoardRenderer {
         }
         // Xử lý các match phụ do kỹ năng
         for (const [row, col] of listMatches) {
-            const cell = this.cells[row][col];
+            const cell = this.board.cells[row][col];
             if (!cell.isNew) {
                 if ((cell.index !== 0 || cell.key === 6)) {
                     if (cell.key !== 0 && cell.key !== 6) {
@@ -273,7 +324,6 @@ export class BoardRenderer {
             case types.VERTICAL:
                 {
                     let colsIndex = [];
-                    console.log('Power vertical.');
                     this.#dfsSkill(row, row + 1, colsIndex, config.ATTRIBUTE.row);
                     if (colsIndex.length) {
                         colsIndex.map(e => matches.push([e, col]))
@@ -283,7 +333,6 @@ export class BoardRenderer {
             case types.HORIZONAL:
                 {
                     let rowsIndex = [];
-                    console.log('Power horizontal.');
                     this.#dfsSkill(col, col + 1, rowsIndex, config.ATTRIBUTE.column);
                     if (rowsIndex.length) {
                         rowsIndex.map(e => matches.push([row, e]))
