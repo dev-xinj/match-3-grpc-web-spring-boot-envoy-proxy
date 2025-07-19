@@ -1,0 +1,46 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+option java_multiple_files = true;
+option java_package = "com.devxijn.grpc_service.grpc.entity";
+enum TYPE{
+  NONE = 0;
+  HORIZONTAL = 1;
+  VERTICAL = 2;
+}
+message Pair{
+  repeated int32 index = 1;
+}
+message Pairs{
+  TYPE type = 1;
+  repeated Pair pairs = 2;
+}
+message Axis{
+  repeated Pairs pairs = 1;
+}
+message Item{
+  int32 key = 1;
+  int32 index = 2;
+  bool is_new = 3;
+  bool is_visited = 4;
+  bool is_queue = 5;
+}
+message RowItem{
+  repeated Item item = 1;
+}
+message Matrix{
+  repeated RowItem row_item = 1;
+}
+message SwapRequest{
+  int32 row = 1;
+  int32 col = 2;
+  int32 key = 3;
+  Matrix matrix = 4;
+}
+service ItemService{
+
+  rpc generateMatrix(google.protobuf.Empty) returns (Matrix){}
+
+  rpc scanMatrix(Matrix) returns (stream Axis){} //trả về cặp giá trị để client swap và remove element
+
+  rpc elementMatches(SwapRequest) returns (stream Axis){}
+}

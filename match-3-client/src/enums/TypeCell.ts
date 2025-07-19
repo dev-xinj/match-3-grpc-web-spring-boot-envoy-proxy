@@ -1,0 +1,6 @@
+export enum TYPECELL {
+  NORMAL = 'NORMAL',
+  BOOM = 'BOOM',
+  HORIZONTAL = 'HORIZONTAL',
+  VERTICAL = 'VERTICAL'
+}
