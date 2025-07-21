@@ -14,6 +14,7 @@ for (const path in images) {
 
 export const imageUIType: ImageUIType = {
   NORMAL: [
+    imageMap['diamond0.png'],
     imageMap['diamond1.png'],
     imageMap['diamond2.png'],
     imageMap['diamond3.png'],
@@ -21,6 +22,7 @@ export const imageUIType: ImageUIType = {
     imageMap['diamond5.png']
   ],
   BOOM: [
+    imageMap['diamond0.png'],
     imageMap['diamond_boom1.png'],
     imageMap['diamond_boom2.png'],
     imageMap['diamond_boom3.png'],
@@ -28,6 +30,7 @@ export const imageUIType: ImageUIType = {
     imageMap['diamond_boom5.png']
   ],
   HORIZONTAL: [
+    imageMap['diamond0.png'],
     imageMap['diamond_hori1.png'],
     imageMap['diamond_hori2.png'],
     imageMap['diamond_hori3.png'],
@@ -35,6 +38,7 @@ export const imageUIType: ImageUIType = {
     imageMap['diamond_hori5.png']
   ],
   VERTICAL: [
+    imageMap['diamond0.png'],
     imageMap['diamond_verti1.png'],
     imageMap['diamond_verti2.png'],
     imageMap['diamond_verti3.png'],

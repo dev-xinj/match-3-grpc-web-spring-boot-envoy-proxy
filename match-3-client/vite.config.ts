@@ -8,7 +8,7 @@ export default defineConfig({
     devSourcemap: true
   },
   server:{
-    port: 8081,
+    port: 5080,
   },
   resolve: {
     alias: {

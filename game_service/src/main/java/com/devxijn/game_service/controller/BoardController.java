@@ -3,10 +3,9 @@ package com.devxijn.game_service.controller;
 import com.devxijn.game_service.entity.Board;
 import com.devxijn.game_service.entity.Match;
 import com.devxijn.game_service.service.BoardService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,6 +13,7 @@ import java.util.List;
  * @author devxijn
  * @since 7/20/2025
  */
+@Slf4j
 @RestController
 @RequestMapping("/board")
 public class BoardController {
@@ -25,12 +25,13 @@ public class BoardController {
     }
 
     @GetMapping("/generate-game")
-    public ResponseEntity<Board> generateGame() {
-        return ResponseEntity.ok(boardService.generateGame());
+    public ResponseEntity<Board> generateGame(@RequestParam Integer rows, @RequestParam Integer columns) {
+        return ResponseEntity.ok(boardService.generateGame(rows, columns));
     }
 
-    @GetMapping("/find-matches")
-    public ResponseEntity<List<Match>> findMatches(){
-        return ResponseEntity.ok(boardService.findMatches(boardService.generateGame()));
+    @PostMapping("/find-matches")
+    public ResponseEntity<List<Match>> findMatches(@RequestBody Board board) {
+        log.info(board.toString());
+        return ResponseEntity.ok(boardService.findMatches(board));
     }
 }

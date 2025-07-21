@@ -33,9 +33,9 @@ public class BoardServiceImpl implements BoardService {
 //    }
 
     @Override
-    public Board generateGame() {
+    public Board generateGame(Integer rows, Integer columns) {
         return Board.builder()
-                .cells(generateBoard(10, 18))
+                .cells(generateBoard(rows, columns))
                 .build();
     }
 
@@ -43,11 +43,24 @@ public class BoardServiceImpl implements BoardService {
     public List<Match> findMatches(Board board) {
         List<Match> matches = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
+//            Map<Integer, Integer> mapIndex = new HashMap<>();
             for (int j = 0; j < 18; j++) {
+                Cell cell = board.getCells()[i][j];
+                if (cell.isVisited()) {
+                    continue;
+                }
+//                if (mapIndex.containsKey(cell.getIndex())) {
+//                    log.info("Doing contain Key");
+//
+//                } else {
+//                    log.info("Do not contain Key");
+//                    mapIndex.put(cell.getIndex(), cell.getIndex());
                 Match match = elementMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
                 if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
                     matches.add(match);
                 }
+//                }
+//                log.info(mapIndex.get(cell.getIndex()).toString());
             }
         }
         return matches;
@@ -55,9 +68,11 @@ public class BoardServiceImpl implements BoardService {
 
     public Cell[][] generateBoard(int row, int column) {
         Cell[][] cells = new Cell[row][column];
+
         for (int i = 0; i < row; i++) {
             for (int j = 0; j < column; j++) {
-                cells[i][j] = createDefaultCell(CellType.NORMAL, 4);
+
+                cells[i][j] = createDefaultCell(CellType.NORMAL, 6 - 1);
             }
         }
         return cells;
@@ -69,12 +84,10 @@ public class BoardServiceImpl implements BoardService {
             boolean[][] newVisited = initVisited();
             List<Pair> pairCol = dfs(i, j, index, isVisited, dx, dy, false, cells);
             List<Pair> pairRow = new LinkedList<>();
-            for (int k = 0; k < pairCol.size(); k++) {
-                Pair pair = pairCol.get(k);
+            for (Pair pair : pairCol) {
                 pairRow.addAll(dfs(pair.getRow(), pair.getCol(), index, newVisited, dy, dx, true, cells));
             }
             Integer max = maxNumber(pairRow);
-            log.info(max.toString());
             pairRow = pairRow.stream().filter(e -> {
                 return Objects.equals(e.getRow(), max);
             }).collect(Collectors.toList());

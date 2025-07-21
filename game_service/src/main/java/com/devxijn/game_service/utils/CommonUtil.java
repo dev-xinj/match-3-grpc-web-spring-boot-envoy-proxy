@@ -14,6 +14,6 @@ import java.util.Random;
 
 public class CommonUtil {
     public static int randNumber(int max) {
-        return new Random().nextInt(max) + 1;
+        return new Random().nextInt(max) +1;
     }
 }

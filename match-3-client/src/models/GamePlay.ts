@@ -24,8 +24,10 @@ export class GamePlay {
       return 'SELECTED'
     }
     if (this.#isAdjacent(this.firstPick, pick)) {
-      this.#swapEffect(this.firstPick, pick).then(() => {
-        if (boardRender.board.findMatchAt()) {
+      this.#swapEffect(this.firstPick, pick).then(async () => {
+        const matches = await boardRender.board.findMatchAt()
+        console.log('match: ', matches)
+        if (matches.length) {
           this.firstPick = null
         } else {
           this.#swapEffect(this.firstPick, pick).then(() => {

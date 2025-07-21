@@ -4,6 +4,7 @@ import com.devxijn.game_service.enums.CellType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author devxijn
@@ -11,6 +12,7 @@ import lombok.Data;
  */
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class Cell {
     private CellType cellType;

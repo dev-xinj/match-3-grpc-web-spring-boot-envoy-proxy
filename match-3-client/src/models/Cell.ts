@@ -33,4 +33,15 @@ export class Attribute {
     this.colorFill = colorFill
     this.colorBorder = colorBorder
   }
+  // toCellModel(cellApi: CellApi): Cell {
+  //   const cell: Cell = new Cell(
+  //     this.index,
+  //     this.cellType,
+  //     this.isVisited,
+  //     this.isNew,
+  //     this.isQueue,
+  //     new Attribute(config.COLOR.default, config.COLOR.border)
+  //   )
+  //   return cell
+  // }
 }

@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface BoardService {
 
-    Board generateGame();
+    Board generateGame(Integer rows,Integer columns);
 
     List<Match> findMatches(Board board);
 }
