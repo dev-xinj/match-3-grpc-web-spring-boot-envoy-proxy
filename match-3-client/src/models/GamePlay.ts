@@ -1,3 +1,4 @@
+import { Match } from '../api/models/Match'
 import { config } from '../constants/config'
 import { Pair } from '../types/Pair'
 import { BoardRenderer } from './BoardRender'
@@ -25,7 +26,7 @@ export class GamePlay {
     }
     if (this.#isAdjacent(this.firstPick, pick)) {
       this.#swapEffect(this.firstPick, pick).then(async () => {
-        const matches = await boardRender.board.findMatchAt()
+        const matches: Match[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), Match.prototype)
         console.log('match: ', matches)
         if (matches.length) {
           this.firstPick = null

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +56,8 @@ public class BoardServiceImpl implements BoardService {
 //                } else {
 //                    log.info("Do not contain Key");
 //                    mapIndex.put(cell.getIndex(), cell.getIndex());
-                Match match = elementMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
+//                Match match = elementMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
+                Match match = findConnectedMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
                 if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
                     matches.add(match);
                 }
@@ -78,6 +80,45 @@ public class BoardServiceImpl implements BoardService {
         return cells;
     }
 
+    public Match findConnectedMatch(int x, int y, int type, Cell[][] cells, boolean[][] visited) {
+        List<Pair> result = new ArrayList<>();
+        Queue<Pair> queue = new LinkedList<>();
+        queue.add(new Pair(x, y));
+        visited[x][y] = true;
+        cells[x][y].setVisited(true);
+        while (!queue.isEmpty()) { //nếu queue != rỗng
+            Pair p = queue.poll(); //lấy phần tử đầu của queue
+            result.add(p);//thêm phần tử đầu của queue vừa lấy vào danh sách cần xử lý
+
+            int[][] dirs = {{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
+            for (int[] d : dirs) { //duyệt các cạnh kề
+                int nx = p.getRow() + d[0], ny = p.getCol() + d[1];
+                if (nx >= 0 && nx < 10 && ny >= 0 && ny < 18
+                        && !visited[nx][ny]
+                        && cells[nx][ny].getIndex() == type) {
+                    queue.add(new Pair(nx, ny));
+                    visited[nx][ny] = true;
+                    cells[nx][ny].setVisited(true);
+                }
+            }
+        }
+
+        Match match = new Match();
+        if (result.size() >= 3) {
+            Integer maxRow = getMostFrequent(result, Pair::getRow);
+            Integer maxCol = getMostFrequent(result, Pair::getCol);
+            List<Pair> pairRow = filterByCondition(result, Pair::getRow, maxRow);
+            List<Pair> pairCol = filterByCondition(result, Pair::getCol, maxCol);
+            if (pairRow.size() > 2) {
+                match.setPairRows(pairRow);
+            }
+            if (pairCol.size() > 2) {
+                match.setPairColumns(pairCol);
+            }
+        }
+        return match;
+    }
+
     public Match elementMatch(int i, int j, int index, Cell[][] cells, boolean[][] isVisited) {
         Match match = new Match();
         if (cells[i][j].getIndex() == index && !isVisited[i][j]) {
@@ -87,7 +128,7 @@ public class BoardServiceImpl implements BoardService {
             for (Pair pair : pairCol) {
                 pairRow.addAll(dfs(pair.getRow(), pair.getCol(), index, newVisited, dy, dx, true, cells));
             }
-            Integer max = maxNumber(pairRow);
+            Integer max = getMostFrequent(pairRow, Pair::getRow);
             pairRow = pairRow.stream().filter(e -> {
                 return Objects.equals(e.getRow(), max);
             }).collect(Collectors.toList());
@@ -102,18 +143,25 @@ public class BoardServiceImpl implements BoardService {
         return match;
     }
 
-    private Integer maxNumber(List<Pair> pairCol) {
+    private List<Pair> filterByCondition(List<Pair> pairs, Function<Pair, Integer> func, Integer valueCompare) {
+        return pairs.stream().filter(e -> {
+            return Objects.equals(func.apply(e), valueCompare);
+        }).toList();
+    }
+
+    private Integer getMostFrequent(List<Pair> pairs, Function<Pair, Integer> extractor) {
         int[] counter = new int[1000];
-        pairCol.forEach(e -> {
-            counter[e.getRow()]++;
-        });
-        int max = 0;
-        for (int i = 0; i < counter.length; i++) {
-            if (counter[max] < counter[i]) {
-                max = i;
+        for (Pair p : pairs) {
+            counter[extractor.apply(p)]++;
+        }
+
+        int maxIndex = 0;
+        for (int i = 1; i < counter.length; i++) {
+            if (counter[i] > counter[maxIndex]) {
+                maxIndex = i;
             }
         }
-        return max;
+        return maxIndex;
     }
 
     private List<Pair> dfs(int i, int j, int index, boolean[][] visited, int[] dx, int[] dy, boolean isHori, Cell[][] cells) {
@@ -148,10 +196,9 @@ public class BoardServiceImpl implements BoardService {
 
     private boolean[][] initVisited() {
         boolean[][] isVisited = new boolean[rows][columns];
-        Arrays.stream(isVisited).map(e -> {
-            Arrays.fill(e, false);
-            return e;
-        });
+        for (boolean[] row : isVisited) {
+            Arrays.fill(row, false);
+        }
         return isVisited;
     }
 }

@@ -23,6 +23,9 @@ export default tseslint.config(
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
+      ], 'padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: 'function', next: 'function' }
       ],
       'prettier/prettier': [
         'warn',
