@@ -44,10 +44,11 @@ export const imageUIType: ImageUIType = {
     imageMap['diamond_verti3.png'],
     imageMap['diamond_verti4.png'],
     imageMap['diamond_verti5.png']
-  ]
+  ],
+  DESTROY: [imageMap['diamond_all.png']]
 }
 
-export type TypesImage = 'NORMAL' | 'BOOM' | 'HORIZONTAL' | 'VERTICAL'
+export type TypesImage = 'NORMAL' | 'BOOM' | 'HORIZONTAL' | 'VERTICAL' | 'DESTROY'
 
 export type ImageUIType = {
   [type in TypesImage]: string[]

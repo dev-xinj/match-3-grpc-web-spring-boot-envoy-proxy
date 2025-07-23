@@ -17,6 +17,7 @@ const BoardCanvas = ({ config }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    console.log('================')
     const ctx = canvasRef.current?.getContext('2d')
     const canvas = canvasRef.current
     let gamePlay: GamePlay | null = null

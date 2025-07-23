@@ -1,6 +1,8 @@
 import { config } from '../constants/config'
 import { imageUIType } from '../constants/ItemUI'
-import { Pair } from '../types/Pair'
+import { TYPECELL } from '../enums/TypeCell'
+import { Match, Pair } from '../types/Pair'
+import { getRandomInt } from '../utils/common'
 import { Board } from './Board'
 import { Cell } from './Cell'
 import Shape from './Shape'
@@ -8,9 +10,10 @@ import Shape from './Shape'
 export class BoardRenderer {
   board: Board
   ctx: CanvasRenderingContext2D
-  queue: number[]
+  queue: Pair[][]
   imgMgr: Shape
   cellSize: number = config.ATTRIBUTE.boxSize
+  preKey: number | undefined
   constructor(board: Board, ctx: CanvasRenderingContext2D) {
     this.board = board
     this.ctx = ctx
@@ -19,6 +22,7 @@ export class BoardRenderer {
   }
   loadAll() {
     this.imgMgr.loadAll().then(() => {
+      console.log(this.imgMgr.images)
       this.draw()
     })
   }
@@ -46,7 +50,7 @@ export class BoardRenderer {
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         const cell = board.getCell(i, j)
-
+        console.log(cell)
         this.fillCell({ row: i, column: j }, cell)
         // this.drawImage(i, j, cell);
       }
@@ -59,6 +63,7 @@ export class BoardRenderer {
   drawCell(pair: Pair, cell: Cell) {
     const { row, column } = pair
     const { ctx } = this
+    console.log(cell)
     ctx.fillStyle = cell.attribute.colorFill
     ctx.fillRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
     ctx.lineWidth = 3
@@ -133,6 +138,9 @@ export class BoardRenderer {
       this._drawCellAndImage({ row: b, column: numberAxis }, this.board.cells[b][numberAxis])
     }
   }
+
+  /* ================== */
+
   swapEffect = (pairPick: number[][]) => {
     return new Promise<void>((resolve) => {
       if (!pairPick || pairPick.length < 2) return resolve()
@@ -198,4 +206,417 @@ export class BoardRenderer {
     this.board.cells[row][column].attribute.colorFill = config.COLOR.default
     this.ctx.clearRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
   }
+
+  /* =========== */
+  #clearCellByIndex(x: number, y: number, cell: Cell) {
+    if (cell.index != 0) {
+      cell.attribute.colorFill = config.COLOR.default
+      this.fillCell({ row: x, column: y }, cell)
+    }
+  }
+  mapSpecialShapes(matches: Pair[], index: number) {
+    const row = matches[0].row
+    const col = matches[0].column
+    this.board.cells[row][col].index = index
+    if (index === 0) {
+      this.board.cells[row][col].type = TYPECELL.DESTROY
+    }
+    this.board.cells[row][col].isNew = true
+    this.board.cells[row][col].attribute.colorBorder = config.COLOR.border
+    this.#clearCellByIndex(col, row, this.board.cells[row][col])
+  }
+  numberOfMatches(matches: Pair[]) {
+    const length = matches.length
+    return length >= 5 ? 2 : length > 3 && length < 5 ? 1 : length > 2 && length < 4 ? 0 : -1
+  }
+  defineNumberOfMatches(matches: Pair[]) {
+    const length = matches.length
+    return length >= 5 ? 5 : length > 3 && length < 5 ? 3 : -1
+  }
+
+  /* Match Resolve */
+
+  async matchResolver(matches: Match[]) {
+    const mapSkill: number[][][] = [
+      [[1], [1], [0]],
+      [[1], [2, 3], [2, 0]],
+      [[0], [0, 3], [0, 0]]
+    ]
+    let newArr: Pair[] = []
+    const promises = []
+    for (const pair of matches) {
+      // listMatches.forEach(element => {
+      newArr = []
+      if (pair.pairColumns && pair.pairRows) {
+        const mapIndex = mapSkill[this.numberOfMatches(pair.pairRows)][this.numberOfMatches(pair.pairColumns)]
+
+        this.mapSpecialShapes(pair.pairRows, mapIndex[0])
+        if (mapIndex.length >= 2) {
+          this.mapSpecialShapes(pair.pairColumns, mapIndex[1])
+        }
+        newArr = pair.pairRows.concat(pair.pairColumns).slice()
+        // newArr = new Set(...new Set(newArr.filter(e => JSON.stringify(e))));
+        newArr = newArr.filter((e) => {
+          return this.board.cells[e.row][e.column].isNew != true
+        })
+      } else {
+        let mapIndex
+        if (pair.pairColumns) {
+          mapIndex = this.defineNumberOfMatches(pair.pairColumns)
+          if (mapIndex != -1) {
+            if (mapIndex === 5) {
+              mapIndex = 0
+            }
+            this.mapSpecialShapes(pair.pairColumns, mapIndex)
+          }
+          newArr = pair.pairColumns.slice()
+        } else if (pair.pairRows) {
+          mapIndex = this.defineNumberOfMatches(pair.pairRows)
+          if (mapIndex != -1) {
+            if (mapIndex === 5) {
+              mapIndex = 0
+            } else {
+              mapIndex = mapIndex - 1
+            }
+            this.mapSpecialShapes(pair.pairRows, mapIndex)
+          }
+          newArr = pair.pairRows.slice()
+        }
+      }
+
+      promises.push(this.removeDiamon(newArr))
+    }
+    await Promise.all(promises).then(async (data) => {
+      data.forEach((item) => {
+        newArr = newArr.concat(item)
+      })
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const sortArr = [
+        ...new Set(
+          newArr
+            .flatMap((e) => e.column)
+            .sort((a, b) => a - b)
+            .flat()
+        )
+      ]
+      sortArr.forEach((e) => {
+        this.moveDown(e, 10 - 1)
+      })
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    })
+    let newData = []
+    while (this.queue.length) {
+      newData = await this.removeDiamon(this.queue.shift() as Pair[])
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const sortArr = [
+        ...new Set(
+          newData
+            .flatMap((e) => e.column)
+            .sort((a, b) => a - b)
+            .flat()
+        )
+      ]
+      sortArr.forEach((e) => {
+        this.moveDown(e, 10 - 1)
+      })
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  }
+  /* Move Down */
+  moveDown(col: number, len: number) {
+    new Promise<void>((resolve) => {
+      while (len >= 0) {
+        if (this.board.cells[len][col].index != 0) {
+          len--
+          continue
+        } else {
+          for (let k = len; k >= 0; k--) {
+            if (k == 0) {
+              const num = getRandomInt(this.imgMgr.length() - 1)
+              this.board.cells[k][col].index = num
+              this.fillCell({ row: col, column: k }, this.board.cells[k][col])
+            } else {
+              const pre = { row: k, col: col }
+              const pos = { row: k - 1, col: col }
+              const index = this.queue.findIndex(
+                (element) => JSON.stringify(element) === JSON.stringify([[pos.row, pos.col]])
+              )
+              if (index >= 0) {
+                this.queue[index] = [{ row: pre.row, column: pre.col }]
+              }
+              this._swapCells([
+                [pre.row, pre.col],
+                [pos.row, pos.col]
+              ])
+            }
+          }
+          len = 10 - 1
+        }
+        // isLoop = true;
+        this.#refeshVisitedItems()
+        resolve()
+      }
+    })
+  }
+  /* Effect remove */
+
+  fadeAndShrinkEffect(col: number, row: number, fadeSpeed: number, shrinkRate: number, originalSize: number) {
+    return new Promise<void>((resolve) => {
+      let fadeOpacity = 1.0
+      let currentSize = originalSize
+      const shrinkInterval = setInterval(() => {
+        fadeOpacity -= fadeSpeed
+        this.ctx.clearRect(col * originalSize, row * originalSize, originalSize, originalSize)
+        const x = col * originalSize + (originalSize - currentSize) / 2
+        const y = row * originalSize + (originalSize - currentSize) / 2
+        this.ctx.globalAlpha = fadeOpacity
+        this.ctx.fillRect(x, y, currentSize, currentSize)
+        currentSize -= shrinkRate
+        if (currentSize <= 0) {
+          currentSize = 0
+          clearInterval(shrinkInterval)
+          resolve()
+        }
+      }, 50)
+    })
+  }
+  /* remove Effect  */
+  async removeDiamon(pairs: Pair[]): Promise<Pair[]> {
+    if (pairs == null) {
+      return []
+    }
+    const temp = pairs.slice()
+    // const length: number = temp.length
+    // if (length > 2) {
+    const promises = []
+    let listMatches: number[][] = []
+    // this.resetTimer()
+    // this.#score = this.#generateScore(length)
+    // this.showScore(Score)
+    for (let i = 0; i < temp.length; i++) {
+      const row = temp[i].row
+      const col = temp[i].column
+      if (!this.board.cells[row][col].isNew) {
+        if (this.board.cells[row][col].type != TYPECELL.NORMAL) {
+          listMatches = listMatches.concat(this.#handleSigleSkill(row, col))
+        }
+        if (
+          (this.board.cells[row][col].index != 0 || this.board.cells[row][col].type == TYPECELL.DESTROY) &&
+          this.board.cells[row][col].isQueue == false
+        ) {
+          if (this.board.cells[row][col].index != 0 && this.board.cells[row][col].type != TYPECELL.DESTROY) {
+            this.preKey = this.board.cells[row][col].index
+          }
+          // let newMatches = this.#handleSigleSkill(row, col, preKey);
+          // this.queue.push([[row, col]]);
+          // this.board.cells[row][col].isQueue = true;
+          // continue
+          // if (newMatches) {
+          //     temp = temp.concat(newMatches);
+          // }
+        }
+
+        const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
+        this.board.cells[row][col].index = 0
+        this.board.cells[row][col].type = TYPECELL.NORMAL
+        this.board.cells[row][col].attribute.colorFill = config.COLOR.default
+        this.board.cells[row][col].isQueue = false
+        this.#clearCellByIndex(col, row, this.board.cells[row][col])
+        promises.push(fadePromise)
+        // this.#clearDraw(col, row, this.board.cells[row][col]);
+      } else {
+        this.board.cells[row][col].isNew = false
+      }
+    }
+    if (listMatches.length) {
+      for (let i = 0; i < listMatches.length; i++) {
+        const row = listMatches[i][0]
+        const col = listMatches[i][1]
+        if (!this.board.cells[row][col].isNew) {
+          if (this.board.cells[row][col].type != TYPECELL.NORMAL) {
+            if (this.board.cells[row][col].type != TYPECELL.DESTROY) {
+              this.preKey = this.board.cells[row][col].index
+            }
+            this.queue.push([{ row: row, column: col }])
+            // this.board.cells[row][col].isQueue = true;
+            continue
+          }
+
+          const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
+          this.board.cells[row][col].index = 0
+          this.board.cells[row][col].type = TYPECELL.NORMAL
+          this.board.cells[row][col].attribute.colorFill = config.COLOR.default
+          this.board.cells[row][col].isQueue = false
+          this.#clearCellByIndex(col, row, this.board.cells[row][col])
+          temp.push({ row: row, column: col })
+          promises.push(fadePromise)
+          // this.#clearDraw(col, row, this.board.cells[row][col]);
+        } else {
+          this.board.cells[row][col].isNew = false
+        }
+      }
+    }
+    await Promise.all(promises)
+    // isLoop = true;
+    // } else if (length == 2) {
+    //     this.suggestes.push(matches);
+    // }
+    this.#refeshVisitedItems()
+    return temp
+  }
+  #refeshVisitedItems() {
+    this.board.cells.forEach((row) => {
+      return row.forEach((cell) => {
+        if (cell.isVisited) cell.isVisited = false
+        if (cell.isNew) cell.isNew = false
+      })
+    })
+  }
+  /* Handle Skill */
+  #dfsSkill(i: number, j: number, indexs: number[], limit: number): number[] {
+    if (i < 0 || j < 0 || i >= limit || j >= limit) return indexs
+    indexs.push(i, j)
+    return this.#dfsSkill(i - 1, j + 1, indexs, limit)
+  }
+  #dfsSkillBoom(i: number, j: number, dx: number[], dy: number[], indexs: number[][]) {
+    for (let k = 0; k < dx.length; k++) {
+      const i1 = i + dx[k]
+      const j1 = j + dy[k]
+      if (i1 >= 0 && i1 < 10 && j1 >= 0 && j1 < 18) {
+        indexs.push([i1, j1])
+      }
+    }
+  }
+  #clearByKey() {
+    const matches: number[][] = []
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 18; j++) {
+        if (this.board.cells[i][j].index == 3)
+          //thay 3 thành index
+          matches.push([i, j])
+      }
+    }
+    return matches
+  }
+  #handleSigleSkill(row: number, col: number): number[][] {
+    // let row = matches[0];
+    // let col = matches[1];
+    let matches: number[][] = []
+    switch (this.board.cells[row][col].type) {
+      case TYPECELL.VERTICAL: {
+        console.log('Power vertical.')
+        const colsIndex: number[] = this.#dfsSkill(row, row + 1, [], 10)
+        if (colsIndex.length) {
+          colsIndex.map((e) => matches.push([e, col]))
+        }
+        break
+      }
+      case TYPECELL.HORIZONTAL: {
+        console.log('Power horizontal.')
+        const rowsIndex = this.#dfsSkill(col, col + 1, [], 18)
+        if (rowsIndex.length) {
+          rowsIndex.map((e) => matches.push([row, e]))
+        }
+        break
+      }
+      case TYPECELL.BOOM: {
+        const dx = [-1, 0, 1, 1, 1, 0, -1, -1]
+        const dy = [-1, -1, -1, 0, 1, 1, 1, 0]
+        this.#dfsSkillBoom(row, col, dx, dy, matches)
+        break
+      }
+      case TYPECELL.DESTROY: {
+        matches = this.#clearByKey()
+        break
+      }
+    }
+    if (matches.length) {
+      return matches
+    } else {
+      return []
+    }
+  }
+  /* #handleDoubleSkill(pair: Pair, type: TYPECELL, index: number) {
+    const row = pair.row
+    const col = pair.column
+    let temp: number[][] = []
+    // let matches = [];
+    switch (type) {
+      case TYPECELL.CROSS: {
+        console.log('Power CROSS.')
+        const arrCols: number[] = this.#dfsSkill(col, col - 1, [], 18)
+        const arrRows: number[] = this.#dfsSkill(row, row - 1, [], 10)
+        if (arrCols.length) {
+          arrCols.map((e) => temp.push([row, e]))
+        }
+        if (arrRows.length) {
+          arrRows.map((e) => temp.push([e, col]))
+        }
+
+        break
+      }
+
+      case TYPECELL.COMBO_BOOM: {
+        console.log('COMBO_BOOM')
+        const arrCols: number[] =this.#dfsSkill(col, col - 1, colsIndex, 18)
+        const arrRows: number[] = this.#dfsSkill(row, row - 1, rowsIndex, 10)
+        if (arrCols.length) {
+          arrCols.map((e) => {
+            temp.push([row, e])
+            if (row + 1 < 10 && row + 1 >= 0) {
+              temp.push([row + 1, e])
+            }
+            if (row - 1 < 10 && row - 1 >= 0) {
+              temp.push([row - 1, e])
+            }
+          })
+        }
+        if (arrRows.length) {
+          arrRows.map((e) => {
+            temp.push([e, col])
+            if (col + 1 < 18 && col + 1 >= 0) {
+              temp.push([e, col + 1])
+            }
+            if (col - 1 < 18 && col - 1 >= 0) {
+              temp.push([e, col - 1])
+            }
+          })
+        }
+        break
+      }
+      case TYPECELL.MEGA_BOOM: {
+        //2 BOOM
+        const dx = [-1, 0, 1, 1, 1, 0, -1, -1, -2, 0, 2, 2, 2, 0, -2, -2]
+        const dy = [-1, -1, -1, 0, 1, 1, 1, 0, -2, -2, -2, 0, 2, 2, 2, 0]
+        this.#dfsSkillBoom(row, col, dx, dy, temp)
+        break
+      }
+
+      case TYPECELL.EXTRA_DESTROY: {
+        //hori or verti + DESTROY
+        temp = this.#clearByKey()
+        temp.forEach((e) => {
+          this.board.cells[e[0]][e[1]].index == index
+        })
+        break
+      }
+
+      case TYPECELL.MULTI_DESTROY: {
+        //2 DESTROY
+        break
+      }
+
+      case TYPECELL.ULTRA_DESTROY: {
+        //DESTROY + BOOM
+        temp = this.#clearByKey()
+        temp.forEach((e) => {
+          this.board.cells[e[0][1]].index == index
+        })
+        break
+      }
+    }
+    if (temp.length) {
+      return temp
+    }
+  } */
 }

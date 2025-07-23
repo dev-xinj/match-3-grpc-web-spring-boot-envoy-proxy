@@ -10,10 +10,12 @@ export default class Shape {
       NORMAL: [],
       BOOM: [],
       HORIZONTAL: [],
-      VERTICAL: []
+      VERTICAL: [],
+      DESTROY: []
     }
   }
   async loadAll() {
+
     for (const key of Object.keys(imageUIType) as TypesImage[]) {
       const paths = this.source[key]
       this.images[key] = await Promise.all(
@@ -26,6 +28,7 @@ export default class Shape {
         })
       )
     }
+    console.log(this.images)
   }
   get(type: TYPECELL, index: number) {
     return this.images[type]?.[index] || null

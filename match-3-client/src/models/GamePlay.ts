@@ -1,7 +1,8 @@
-import { Match } from '../api/models/Match'
+import { MatchApi } from '../api/models/MatchApi'
 import { config } from '../constants/config'
 import { Pair } from '../types/Pair'
 import { BoardRenderer } from './BoardRender'
+import { convert } from './ConvertToMatchType'
 export class GamePlay {
   boardRender: BoardRenderer
   firstPick: Pair | null = null
@@ -11,6 +12,7 @@ export class GamePlay {
   }
 
   play() {
+
     this.boardRender.loadAll()
   }
 
@@ -25,10 +27,12 @@ export class GamePlay {
       return 'SELECTED'
     }
     if (this.#isAdjacent(this.firstPick, pick)) {
+      //Kiểm tra có phải 2 ô hợp lệ không
       this.#swapEffect(this.firstPick, pick).then(async () => {
-        const matches: Match[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), Match.prototype)
-        console.log('match: ', matches)
-        if (matches.length) {
+        const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
+        console.log('match: ', matchesApi)
+        if (matchesApi.length) {
+          this.boardRender.matchResolver(convert(matchesApi))
           this.firstPick = null
         } else {
           this.#swapEffect(this.firstPick, pick).then(() => {
