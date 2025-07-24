@@ -14,5 +14,5 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Pair {
     Integer row;
-    Integer col;
+    Integer column;
 }

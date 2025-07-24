@@ -2,19 +2,24 @@ import { MatchApi } from '../api/models/MatchApi'
 import { Match } from '../types/Pair'
 
 export function convert(matchesApi: MatchApi[]): Match[] {
-  const matches: Match = {
-    pairRows: [],
-    pairColumns: []
-  }
-  matchesApi.forEach((e) => {
+  const arrMatches: Match[] = matchesApi.map((e) => {
+    const match: Match = {
+      pairRows: [],
+      pairColumns: []
+    }
     if (e.pairColumns != null) {
-      matches.pairColumns.push(e.pairColumns)
+      match.pairColumns.push(...e.pairColumns)
+      // match.pairColumns.map((e) => {
+      //   return { row: e.row, column: e.column }
+      // })
     }
     if (e.pairRows != null) {
-      matches.pairRows.push(e.pairRows)
+      match.pairRows.push(...e.pairRows)
+      // match.pairRows.map((e) => {
+      //   return { row: e.row, column: e.column }
+      // })
     }
+    return match
   })
-  const arr: Match[] = []
-  arr[0] = matches
-  return arr
+  return arrMatches
 }

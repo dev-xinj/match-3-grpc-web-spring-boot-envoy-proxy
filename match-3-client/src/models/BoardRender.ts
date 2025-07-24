@@ -22,7 +22,6 @@ export class BoardRenderer {
   }
   loadAll() {
     this.imgMgr.loadAll().then(() => {
-      console.log(this.imgMgr.images)
       this.draw()
     })
   }
@@ -50,7 +49,6 @@ export class BoardRenderer {
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < columns; j++) {
         const cell = board.getCell(i, j)
-        console.log(cell)
         this.fillCell({ row: i, column: j }, cell)
         // this.drawImage(i, j, cell);
       }
@@ -63,12 +61,12 @@ export class BoardRenderer {
   drawCell(pair: Pair, cell: Cell) {
     const { row, column } = pair
     const { ctx } = this
-    console.log(cell)
-    ctx.fillStyle = cell.attribute.colorFill
+    ctx.clearRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
+    ctx.fillStyle = config.COLOR.default
     ctx.fillRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
     ctx.lineWidth = 3
     ctx.globalAlpha = 1.0
-    ctx.strokeStyle = cell.attribute.colorBorder
+    ctx.strokeStyle = config.COLOR.border
     ctx.strokeRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
   }
   drawImage(pair: Pair, cell: Cell) {
@@ -114,6 +112,8 @@ export class BoardRenderer {
     const temp: Cell = this.board.cells[row1][col1]
     this.board.cells[row1][col1] = this.board.cells[row2][col2]
     this.board.cells[row2][col2] = temp
+    this.fillCell({ row: row1, column: col1 }, this.board.cells[row1][col1])
+    this.fillCell({ row: row2, column: col2 }, this.board.cells[row2][col2])
   }
   _drawCellAndImage(pair: Pair, cell: Cell) {
     this.fillCell(pair, cell)
@@ -247,7 +247,7 @@ export class BoardRenderer {
     for (const pair of matches) {
       // listMatches.forEach(element => {
       newArr = []
-      if (pair.pairColumns && pair.pairRows) {
+      if (pair.pairColumns.length > 0 && pair.pairRows.length > 0) {
         const mapIndex = mapSkill[this.numberOfMatches(pair.pairRows)][this.numberOfMatches(pair.pairColumns)]
 
         this.mapSpecialShapes(pair.pairRows, mapIndex[0])
@@ -334,7 +334,7 @@ export class BoardRenderer {
             if (k == 0) {
               const num = getRandomInt(this.imgMgr.length() - 1)
               this.board.cells[k][col].index = num
-              this.fillCell({ row: col, column: k }, this.board.cells[k][col])
+              this.fillCell({ row: k, column: col }, this.board.cells[k][col])
             } else {
               const pre = { row: k, col: col }
               const pos = { row: k - 1, col: col }

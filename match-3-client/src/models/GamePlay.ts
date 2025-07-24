@@ -12,7 +12,6 @@ export class GamePlay {
   }
 
   play() {
-
     this.boardRender.loadAll()
   }
 
@@ -29,7 +28,10 @@ export class GamePlay {
     if (this.#isAdjacent(this.firstPick, pick)) {
       //Kiểm tra có phải 2 ô hợp lệ không
       this.#swapEffect(this.firstPick, pick).then(async () => {
-        const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
+        const data = await boardRender.board.findMatchAt()
+
+        const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
+        // const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
         console.log('match: ', matchesApi)
         if (matchesApi.length) {
           this.boardRender.matchResolver(convert(matchesApi))
