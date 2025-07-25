@@ -1,3 +1,4 @@
+import Stream from 'stream'
 import { config } from '../constants/config'
 import { imageUIType } from '../constants/ItemUI'
 import { TYPECELL } from '../enums/TypeCell'
@@ -6,6 +7,7 @@ import { getRandomInt } from '../utils/common'
 import { Board } from './Board'
 import { Cell } from './Cell'
 import Shape from './Shape'
+import { EffectManager } from '../core/logic/EffectManager'
 
 export class BoardRenderer {
   board: Board
@@ -14,11 +16,13 @@ export class BoardRenderer {
   imgMgr: Shape
   cellSize: number = config.ATTRIBUTE.boxSize
   preKey: number | undefined
+  effectManager: EffectManager
   constructor(board: Board, ctx: CanvasRenderingContext2D) {
     this.board = board
     this.ctx = ctx
     this.queue = []
     this.imgMgr = new Shape(imageUIType)
+    this.effectManager = new EffectManager(ctx)
   }
   loadAll() {
     this.imgMgr.loadAll().then(() => {
@@ -62,7 +66,7 @@ export class BoardRenderer {
     const { row, column } = pair
     const { ctx } = this
     ctx.clearRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
-    ctx.fillStyle = config.COLOR.default
+    ctx.fillStyle = cell.attribute.colorFill
     ctx.fillRect(column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
     ctx.lineWidth = 3
     ctx.globalAlpha = 1.0
@@ -73,6 +77,7 @@ export class BoardRenderer {
     const { row, column } = pair
     const { ctx, imgMgr } = this
     const img = imgMgr.get(cell.type, cell.index)
+
     ctx.drawImage(img, column * this.cellSize, row * this.cellSize, this.cellSize, this.cellSize)
   }
   ////////////////////////
@@ -208,39 +213,41 @@ export class BoardRenderer {
   }
 
   /* =========== */
-  #clearCellByIndex(x: number, y: number, cell: Cell) {
-    if (cell.index != 0) {
+  #clearCellByIndex(row: number, col: number, cell: Cell) {
+    if (cell.type !== TYPECELL.NORMAL) {
       cell.attribute.colorFill = config.COLOR.default
-      this.fillCell({ row: x, column: y }, cell)
+      this.fillCell({ row: row, column: col }, cell)
     }
   }
-  mapSpecialShapes(matches: Pair[], index: number) {
+  mapSpecialShapes(matches: Pair[], typeCell: TYPECELL) {
     const row = matches[0].row
     const col = matches[0].column
-    this.board.cells[row][col].index = index
-    if (index === 0) {
-      this.board.cells[row][col].type = TYPECELL.DESTROY
+    if (typeCell !== TYPECELL.NORMAL) {
+      if (typeCell === TYPECELL.DESTROY) {
+        this.board.cells[row][col].index = 0
+      }
+      this.board.cells[row][col].isNew = true
+      this.board.cells[row][col].type = typeCell
     }
-    this.board.cells[row][col].isNew = true
+
     this.board.cells[row][col].attribute.colorBorder = config.COLOR.border
-    this.#clearCellByIndex(col, row, this.board.cells[row][col])
+    this.#clearCellByIndex(row, col, this.board.cells[row][col])
   }
   numberOfMatches(matches: Pair[]) {
     const length = matches.length
     return length >= 5 ? 2 : length > 3 && length < 5 ? 1 : length > 2 && length < 4 ? 0 : -1
   }
-  defineNumberOfMatches(matches: Pair[]) {
+  defineNumberOfMatches(matches: Pair[], typeCell: TYPECELL) {
     const length = matches.length
-    return length >= 5 ? 5 : length > 3 && length < 5 ? 3 : -1
+    return length >= 5 ? TYPECELL.DESTROY : length > 3 && length < 5 ? typeCell : TYPECELL.NORMAL
   }
-
   /* Match Resolve */
 
   async matchResolver(matches: Match[]) {
-    const mapSkill: number[][][] = [
-      [[1], [1], [0]],
-      [[1], [2, 3], [2, 0]],
-      [[0], [0, 3], [0, 0]]
+    const mapSkill: TYPECELL[][][] = [
+      [[TYPECELL.BOOM], [TYPECELL.BOOM], [TYPECELL.DESTROY]],
+      [[TYPECELL.BOOM], [TYPECELL.HORIZONTAL, TYPECELL.VERTICAL], [TYPECELL.HORIZONTAL, TYPECELL.DESTROY]],
+      [[TYPECELL.DESTROY], [TYPECELL.DESTROY, TYPECELL.VERTICAL], [TYPECELL.DESTROY, TYPECELL.DESTROY]]
     ]
     let newArr: Pair[] = []
     const promises = []
@@ -249,7 +256,6 @@ export class BoardRenderer {
       newArr = []
       if (pair.pairColumns.length > 0 && pair.pairRows.length > 0) {
         const mapIndex = mapSkill[this.numberOfMatches(pair.pairRows)][this.numberOfMatches(pair.pairColumns)]
-
         this.mapSpecialShapes(pair.pairRows, mapIndex[0])
         if (mapIndex.length >= 2) {
           this.mapSpecialShapes(pair.pairColumns, mapIndex[1])
@@ -261,25 +267,13 @@ export class BoardRenderer {
         })
       } else {
         let mapIndex
-        if (pair.pairColumns) {
-          mapIndex = this.defineNumberOfMatches(pair.pairColumns)
-          if (mapIndex != -1) {
-            if (mapIndex === 5) {
-              mapIndex = 0
-            }
-            this.mapSpecialShapes(pair.pairColumns, mapIndex)
-          }
+        if (pair.pairColumns.length > 0) {
+          mapIndex = this.defineNumberOfMatches(pair.pairColumns, TYPECELL.VERTICAL)
+          this.mapSpecialShapes(pair.pairColumns, mapIndex)
           newArr = pair.pairColumns.slice()
-        } else if (pair.pairRows) {
-          mapIndex = this.defineNumberOfMatches(pair.pairRows)
-          if (mapIndex != -1) {
-            if (mapIndex === 5) {
-              mapIndex = 0
-            } else {
-              mapIndex = mapIndex - 1
-            }
-            this.mapSpecialShapes(pair.pairRows, mapIndex)
-          }
+        } else if (pair.pairRows.length > 0) {
+          mapIndex = this.defineNumberOfMatches(pair.pairRows, TYPECELL.HORIZONTAL)
+          this.mapSpecialShapes(pair.pairRows, mapIndex)
           newArr = pair.pairRows.slice()
         }
       }
@@ -326,7 +320,7 @@ export class BoardRenderer {
   moveDown(col: number, len: number) {
     new Promise<void>((resolve) => {
       while (len >= 0) {
-        if (this.board.cells[len][col].index != 0) {
+        if (this.board.cells[len][col].index != 0 || this.board.cells[len][col].type === TYPECELL.DESTROY) {
           len--
           continue
         } else {
@@ -334,6 +328,9 @@ export class BoardRenderer {
             if (k == 0) {
               const num = getRandomInt(this.imgMgr.length() - 1)
               this.board.cells[k][col].index = num
+              if (k === 0 && col === 16) {
+                console.log('/....')
+              }
               this.fillCell({ row: k, column: col }, this.board.cells[k][col])
             } else {
               const pre = { row: k, col: col }
@@ -400,28 +397,40 @@ export class BoardRenderer {
         if (this.board.cells[row][col].type != TYPECELL.NORMAL) {
           listMatches = listMatches.concat(this.#handleSigleSkill(row, col))
         }
-        if (
-          (this.board.cells[row][col].index != 0 || this.board.cells[row][col].type == TYPECELL.DESTROY) &&
-          this.board.cells[row][col].isQueue == false
-        ) {
-          if (this.board.cells[row][col].index != 0 && this.board.cells[row][col].type != TYPECELL.DESTROY) {
-            this.preKey = this.board.cells[row][col].index
-          }
-          // let newMatches = this.#handleSigleSkill(row, col, preKey);
-          // this.queue.push([[row, col]]);
-          // this.board.cells[row][col].isQueue = true;
-          // continue
-          // if (newMatches) {
-          //     temp = temp.concat(newMatches);
-          // }
-        }
-
+        // if (
+        //   (this.board.cells[row][col].index != 0 || this.board.cells[row][col].type == TYPECELL.DESTROY) &&
+        //   this.board.cells[row][col].isQueue == false
+        // ) {
+        //   if (this.board.cells[row][col].index != 0 && this.board.cells[row][col].type != TYPECELL.DESTROY) {
+        //     this.preKey = this.board.cells[row][col].index
+        //   }
+        // let newMatches = this.#handleSigleSkill(row, col, preKey);
+        // this.queue.push([[row, col]]);
+        // this.board.cells[row][col].isQueue = true;
+        // continue
+        // if (newMatches) {
+        //     temp = temp.concat(newMatches);
+        // }
+        // }
+        // this.effectManager.playExplosionEffect({
+        //   x: col * 40,
+        //   y: row * 40,
+        //   size: 40,
+        //   duration: 300
+        // })
         const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
         this.board.cells[row][col].index = 0
         this.board.cells[row][col].type = TYPECELL.NORMAL
         this.board.cells[row][col].attribute.colorFill = config.COLOR.default
         this.board.cells[row][col].isQueue = false
         this.#clearCellByIndex(col, row, this.board.cells[row][col])
+        // this.effectManager.playExplosionEffect({
+        //   x: col * 40,
+        //   y: row * 40,
+        //   size: 40,
+        //   duration: 400
+        // })
+
         promises.push(fadePromise)
         // this.#clearDraw(col, row, this.board.cells[row][col]);
       } else {
@@ -441,7 +450,6 @@ export class BoardRenderer {
             // this.board.cells[row][col].isQueue = true;
             continue
           }
-
           const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
           this.board.cells[row][col].index = 0
           this.board.cells[row][col].type = TYPECELL.NORMAL
@@ -473,12 +481,13 @@ export class BoardRenderer {
     })
   }
   /* Handle Skill */
-  #dfsSkill(i: number, j: number, indexs: number[], limit: number): number[] {
-    if (i < 0 || j < 0 || i >= limit || j >= limit) return indexs
-    indexs.push(i, j)
-    return this.#dfsSkill(i - 1, j + 1, indexs, limit)
+  #getNumbers(num: number): number[] {
+    return Array.from({ length: num }, (_, i) => i)
   }
-  #dfsSkillBoom(i: number, j: number, dx: number[], dy: number[], indexs: number[][]) {
+  #getNumbersAroundCell(i: number, j: number): number[][] {
+    const indexs: number[][] = []
+    const dx = [-1, 0, 1, 1, 1, 0, -1, -1]
+    const dy = [-1, -1, -1, 0, 1, 1, 1, 0]
     for (let k = 0; k < dx.length; k++) {
       const i1 = i + dx[k]
       const j1 = j + dy[k]
@@ -486,12 +495,14 @@ export class BoardRenderer {
         indexs.push([i1, j1])
       }
     }
+    return indexs
   }
+
   #clearByKey() {
     const matches: number[][] = []
     for (let i = 0; i < 10; i++) {
       for (let j = 0; j < 18; j++) {
-        if (this.board.cells[i][j].index == 3)
+        if (this.board.cells[i][j].index == this.preKey)
           //thay 3 thành index
           matches.push([i, j])
       }
@@ -505,24 +516,16 @@ export class BoardRenderer {
     switch (this.board.cells[row][col].type) {
       case TYPECELL.VERTICAL: {
         console.log('Power vertical.')
-        const colsIndex: number[] = this.#dfsSkill(row, row + 1, [], 10)
-        if (colsIndex.length) {
-          colsIndex.map((e) => matches.push([e, col]))
-        }
+        this.#getNumbers(10).map((e) => matches.push([e, col]))
         break
       }
       case TYPECELL.HORIZONTAL: {
         console.log('Power horizontal.')
-        const rowsIndex = this.#dfsSkill(col, col + 1, [], 18)
-        if (rowsIndex.length) {
-          rowsIndex.map((e) => matches.push([row, e]))
-        }
+        this.#getNumbers(18).map((e) => matches.push([row, e]))
         break
       }
       case TYPECELL.BOOM: {
-        const dx = [-1, 0, 1, 1, 1, 0, -1, -1]
-        const dy = [-1, -1, -1, 0, 1, 1, 1, 0]
-        this.#dfsSkillBoom(row, col, dx, dy, matches)
+        matches.push(...this.#getNumbersAroundCell(row, col))
         break
       }
       case TYPECELL.DESTROY: {

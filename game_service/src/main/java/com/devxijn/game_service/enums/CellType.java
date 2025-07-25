@@ -16,7 +16,15 @@ import java.util.stream.Collectors;
  */
 public enum CellType {
     @JsonProperty("NORMAL")
-    NORMAL;
+    NORMAL,
+    @JsonProperty("BOOM")
+    BOOM,
+    @JsonProperty("HORIZONTAL")
+    HORIZONTAL,
+    @JsonProperty("VERTICAL")
+    VERTICAL,
+    @JsonProperty("DESTROY")
+    DESTROY;
 
     private static final Logger log = LoggerFactory.getLogger(CellType.class);
 
