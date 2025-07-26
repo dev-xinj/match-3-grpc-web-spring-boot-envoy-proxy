@@ -1,3 +1,5 @@
+import { config } from "../../constants/config"
+
 export type AnimationFrameCallback = (progress: number) => void
 export type CanvasEffect = {
   x: number
@@ -76,23 +78,38 @@ export class EffectManager {
 
     requestAnimationFrame(draw)
   }
-  drawViolentShakeImage(
-    ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
-    x: number,
-    y: number,
-    cellSize: number,
-    progress: number
-  ) {
-    const baseAmplitude = 12 // độ rung mạnh hơn
+  fadeAndShrinkEffect(col: number, row: number, originalSize: number, duration: number = 500): Promise<void> {
+    const { ctx } = this
+    return new Promise((resolve) => {
+      const start = performance.now()
 
-    // Rung không liên tục, giật mạnh hơn
-    const shakeX = (Math.random() - 0.5) * baseAmplitude * (1 - progress)
-    const shakeY = (Math.random() - 0.5) * baseAmplitude * (1 - progress)
+      const animate = (now: number) => {
+        const elapsed = now - start
+        const progress = Math.min(elapsed / duration, 1)
 
-    ctx.save()
-    ctx.translate(x + shakeX, y + shakeY)
-    ctx.drawImage(img, 0, 0, cellSize, cellSize)
-    ctx.restore()
+        const fadeOpacity = 1 - progress
+        const currentSize = originalSize * (1 - progress)
+
+        const x = col * originalSize + (originalSize - currentSize) / 2
+        const y = row * originalSize + (originalSize - currentSize) / 2
+
+        // Clear vùng cũ
+        ctx.clearRect(col * originalSize, row * originalSize, originalSize, originalSize)
+
+        // Vẽ hiệu ứng fade & shrink
+        ctx.globalAlpha = fadeOpacity
+        ctx.fillStyle = config.COLOR.default // bạn có thể đổi màu
+        ctx.fillRect(x, y, currentSize, currentSize)
+        ctx.globalAlpha = 1.0
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          resolve()
+        }
+      }
+
+      requestAnimationFrame(animate)
+    })
   }
 }

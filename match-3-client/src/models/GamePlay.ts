@@ -11,8 +11,11 @@ export class GamePlay {
     this.boardRender = boardRender
   }
 
-  play() {
+  async play() {
     this.boardRender.loadAll()
+    // while (fa) {
+    
+    // }
   }
 
   handlePick(x: number, y: number) {

@@ -1,13 +1,14 @@
-import Stream from 'stream'
+import { MatchApi } from '../api/models/MatchApi'
 import { config } from '../constants/config'
 import { imageUIType } from '../constants/ItemUI'
+import { EffectManager } from '../core/logic/EffectManager'
 import { TYPECELL } from '../enums/TypeCell'
 import { Match, Pair } from '../types/Pair'
 import { getRandomInt } from '../utils/common'
 import { Board } from './Board'
 import { Cell } from './Cell'
+import { convert } from './ConvertToMatchType'
 import Shape from './Shape'
-import { EffectManager } from '../core/logic/EffectManager'
 
 export class BoardRenderer {
   board: Board
@@ -25,8 +26,18 @@ export class BoardRenderer {
     this.effectManager = new EffectManager(ctx)
   }
   loadAll() {
-    this.imgMgr.loadAll().then(() => {
+    this.imgMgr.loadAll().then(async () => {
       this.draw()
+      // while (true) {
+      const data = await this.board.findMatchAt()
+      const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
+      if (matchesApi.length > 0) {
+        this.matchResolver(convert(matchesApi))
+      }
+      // else {
+      //   break
+      // }
+      // }
     })
   }
   click(primary: Pair, second: Pair | null) {
@@ -278,7 +289,7 @@ export class BoardRenderer {
         }
       }
 
-      promises.push(this.removeDiamon(newArr))
+      promises.push(this.removeMatchedCells(newArr))
     }
     await Promise.all(promises).then(async (data) => {
       data.forEach((item) => {
@@ -293,14 +304,15 @@ export class BoardRenderer {
             .flat()
         )
       ]
-      sortArr.forEach((e) => {
-        this.moveDown(e, 10 - 1)
-      })
+      // sortArr.forEach((e) => {
+      //   this.moveDown(e, 10 - 1)
+      // })
+      this.dropdownTiles(10, sortArr)
       await new Promise((resolve) => setTimeout(resolve, 500))
     })
     let newData = []
-    while (this.queue.length) {
-      newData = await this.removeDiamon(this.queue.shift() as Pair[])
+    while (this.queue.length > 0) {
+      newData = await this.removeMatchedCells(this.queue.shift() as Pair[])
       await new Promise((resolve) => setTimeout(resolve, 300))
       const sortArr = [
         ...new Set(
@@ -310,10 +322,47 @@ export class BoardRenderer {
             .flat()
         )
       ]
-      sortArr.forEach((e) => {
-        this.moveDown(e, 10 - 1)
-      })
+      // sortArr.forEach((e) => {
+      //   console.log('e', e)
+      //   this.moveDown(e, 10 - 1)
+      // })
+      this.dropdownTiles(10, sortArr)
       await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+  }
+  dropdownTiles(rows: number, arrColumn: number[]) {
+    // Tạo bản sao để không thay đổi grid gốc
+
+    for (let i = 0; i < arrColumn.length; i++) {
+      const col = arrColumn[i]
+      let emptyRow = rows - 1
+
+      // Duyệt từ dưới lên
+      for (let row = rows - 1; row >= 0; row--) {
+        if (this.board.cells[row][col].index !== 0) {
+          // Di chuyển khối xuống vị trí trống gần nhất
+          if (emptyRow !== row) {
+            const index = this.queue.findIndex((element) => {
+              return JSON.stringify(element) === JSON.stringify([{ row: row, column: col }]) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
+            })
+            if (index >= 0) {
+              this.queue[index] = [{ row: emptyRow, column: col }]
+            }
+            this._swapCells([
+              [emptyRow, col],
+              [row, col]
+            ])
+          }
+          emptyRow--
+        }
+      }
+
+      // Điền các ô trống còn lại ở trên bằng các khối mới
+      while (emptyRow >= 0) {
+        this.board.cells[emptyRow][col].index = Math.floor(Math.random() * 5) + 1 // Tạo khối mới (1-5)
+        this.fillCell({ row: emptyRow, column: col }, this.board.cells[emptyRow][col])
+        emptyRow--
+      }
     }
   }
   /* Move Down */
@@ -328,16 +377,14 @@ export class BoardRenderer {
             if (k == 0) {
               const num = getRandomInt(this.imgMgr.length() - 1)
               this.board.cells[k][col].index = num
-              if (k === 0 && col === 16) {
-                console.log('/....')
-              }
               this.fillCell({ row: k, column: col }, this.board.cells[k][col])
             } else {
               const pre = { row: k, col: col }
               const pos = { row: k - 1, col: col }
-              const index = this.queue.findIndex(
-                (element) => JSON.stringify(element) === JSON.stringify([[pos.row, pos.col]])
-              )
+              const index = this.queue.findIndex((element) => {
+                console.log(JSON.stringify(element))
+                return JSON.stringify(element) === JSON.stringify([{ row: pos.row, column: pos.col }]) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
+              })
               if (index >= 0) {
                 this.queue[index] = [{ row: pre.row, column: pre.col }]
               }
@@ -350,7 +397,7 @@ export class BoardRenderer {
           len = 10 - 1
         }
         // isLoop = true;
-        this.#refeshVisitedItems()
+        this.#resetVisitedFlags()
         resolve()
       }
     })
@@ -383,56 +430,23 @@ export class BoardRenderer {
       return []
     }
     const temp = pairs.slice()
-    // const length: number = temp.length
-    // if (length > 2) {
     const promises = []
     let listMatches: number[][] = []
-    // this.resetTimer()
-    // this.#score = this.#generateScore(length)
-    // this.showScore(Score)
     for (let i = 0; i < temp.length; i++) {
       const row = temp[i].row
       const col = temp[i].column
       if (!this.board.cells[row][col].isNew) {
         if (this.board.cells[row][col].type != TYPECELL.NORMAL) {
-          listMatches = listMatches.concat(this.#handleSigleSkill(row, col))
+          listMatches = listMatches.concat(this.#handleSpecialSkill(row, col))
         }
-        // if (
-        //   (this.board.cells[row][col].index != 0 || this.board.cells[row][col].type == TYPECELL.DESTROY) &&
-        //   this.board.cells[row][col].isQueue == false
-        // ) {
-        //   if (this.board.cells[row][col].index != 0 && this.board.cells[row][col].type != TYPECELL.DESTROY) {
-        //     this.preKey = this.board.cells[row][col].index
-        //   }
-        // let newMatches = this.#handleSigleSkill(row, col, preKey);
-        // this.queue.push([[row, col]]);
-        // this.board.cells[row][col].isQueue = true;
-        // continue
-        // if (newMatches) {
-        //     temp = temp.concat(newMatches);
-        // }
-        // }
-        // this.effectManager.playExplosionEffect({
-        //   x: col * 40,
-        //   y: row * 40,
-        //   size: 40,
-        //   duration: 300
-        // })
-        const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
+        const fadePromise = this.effectManager.fadeAndShrinkEffect(col, row, 40, 400)
         this.board.cells[row][col].index = 0
         this.board.cells[row][col].type = TYPECELL.NORMAL
         this.board.cells[row][col].attribute.colorFill = config.COLOR.default
         this.board.cells[row][col].isQueue = false
         this.#clearCellByIndex(col, row, this.board.cells[row][col])
-        // this.effectManager.playExplosionEffect({
-        //   x: col * 40,
-        //   y: row * 40,
-        //   size: 40,
-        //   duration: 400
-        // })
 
         promises.push(fadePromise)
-        // this.#clearDraw(col, row, this.board.cells[row][col]);
       } else {
         this.board.cells[row][col].isNew = false
       }
@@ -447,10 +461,9 @@ export class BoardRenderer {
               this.preKey = this.board.cells[row][col].index
             }
             this.queue.push([{ row: row, column: col }])
-            // this.board.cells[row][col].isQueue = true;
             continue
           }
-          const fadePromise = this.fadeAndShrinkEffect(col, row, 0.1, 5, 40)
+          const fadePromise = this.effectManager.fadeAndShrinkEffect(col, row, 40, 400)
           this.board.cells[row][col].index = 0
           this.board.cells[row][col].type = TYPECELL.NORMAL
           this.board.cells[row][col].attribute.colorFill = config.COLOR.default
@@ -458,21 +471,89 @@ export class BoardRenderer {
           this.#clearCellByIndex(col, row, this.board.cells[row][col])
           temp.push({ row: row, column: col })
           promises.push(fadePromise)
-          // this.#clearDraw(col, row, this.board.cells[row][col]);
         } else {
           this.board.cells[row][col].isNew = false
         }
       }
     }
     await Promise.all(promises)
-    // isLoop = true;
-    // } else if (length == 2) {
-    //     this.suggestes.push(matches);
-    // }
-    this.#refeshVisitedItems()
+    this.#resetVisitedFlags()
     return temp
   }
-  #refeshVisitedItems() {
+
+  async removeMatchedCells(pairs: Pair[]): Promise<Pair[]> {
+    if (!pairs || pairs.length === 0) return []
+
+    const removeDiamon: Pair[] = []
+    const promises: Promise<void>[] = []
+
+    // 1. Clear ô chính
+    for (const pair of pairs) {
+      const cell = this.board.cells[pair.row][pair.column]
+      if (!this.board.cells[pair.row][pair.column].isNew) {
+        // Nếu là skill, ghi lại match đặc biệt
+        if (cell.type !== TYPECELL.NORMAL) {
+          const related = this.#handleSpecialSkill(pair.row, pair.column)
+          promises.push(
+            ...related
+              .filter(([r, c]) => pair.row !== r || pair.column !== c)
+              .map(([r, c]) => this.#removeCellWithEffect({ row: r, column: c }, removeDiamon))
+          )
+        }
+        promises.push(this.#resetCell(pair, removeDiamon))
+      } else {
+        this.board.cells[pair.row][pair.column].isNew = false
+        continue
+      }
+    }
+
+    // 2. Refresh và return kết quả
+    await Promise.all(promises)
+    this.#resetVisitedFlags()
+    return removeDiamon
+  }
+  #removeCellWithEffect(pair: Pair, removeDiamon: Pair[]): Promise<void> {
+    const { row, column } = pair
+    const cell = this.board.cells[row][column]
+
+    // Nếu là skill → đưa vào queue xử lý riêng
+    if (cell.type !== TYPECELL.NORMAL) {
+      if (cell.type !== TYPECELL.DESTROY) {
+        this.preKey = cell.index
+      }
+      this.queue.push([pair])
+      return Promise.resolve() // Không xoá liền
+    }
+
+    // const fade = this.effectManager.fadeAndShrinkEffect(column, row, 40, 400)
+
+    // // Reset trạng thái cell
+    // cell.index = 0
+    // cell.type = TYPECELL.NORMAL
+    // cell.attribute.colorFill = config.COLOR.default
+    // cell.isQueue = false
+
+    // this.#clearCellByIndex(column, row, cell)
+    // removeDiamon.push(pair)
+
+    return this.#resetCell(pair, removeDiamon)
+  }
+  #resetCell(pair: Pair, removeDiamon: Pair[]): Promise<void> {
+    const { row, column } = pair
+    const cell = this.board.cells[row][column]
+    const fade = this.effectManager.fadeAndShrinkEffect(column, row, 40, 400)
+
+    // Reset trạng thái cell
+    cell.index = 0
+    cell.type = TYPECELL.NORMAL
+    cell.attribute.colorFill = config.COLOR.default
+    cell.isQueue = false
+
+    this.#clearCellByIndex(column, row, cell)
+    removeDiamon.push(pair)
+    return fade
+  }
+  #resetVisitedFlags() {
     this.board.cells.forEach((row) => {
       return row.forEach((cell) => {
         if (cell.isVisited) cell.isVisited = false
@@ -480,6 +561,7 @@ export class BoardRenderer {
       })
     })
   }
+
   /* Handle Skill */
   #getNumbers(num: number): number[] {
     return Array.from({ length: num }, (_, i) => i)
@@ -509,7 +591,7 @@ export class BoardRenderer {
     }
     return matches
   }
-  #handleSigleSkill(row: number, col: number): number[][] {
+  #handleSpecialSkill(row: number, col: number): number[][] {
     // let row = matches[0];
     // let col = matches[1];
     let matches: number[][] = []
