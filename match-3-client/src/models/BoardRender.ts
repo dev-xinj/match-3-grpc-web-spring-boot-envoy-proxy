@@ -29,11 +29,11 @@ export class BoardRenderer {
     this.imgMgr.loadAll().then(async () => {
       this.draw()
       // while (true) {
-      const data = await this.board.findMatchAt()
-      const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
-      if (matchesApi.length > 0) {
-        this.matchResolver(convert(matchesApi))
-      }
+      // const data = await this.board.findMatchAt()
+      // const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
+      // if (matchesApi.length > 0) {
+      //   this.matchResolver(convert(matchesApi))
+      // }
       // else {
       //   break
       // }
@@ -110,6 +110,32 @@ export class BoardRenderer {
         a: Math.min(first[0], second[0]),
         b: Math.max(first[0], second[0])
       }
+    }
+  }
+  /* =================== */
+  handlePick(firstPick: Pair, pick: Pair) {
+    if (this.isAdjacent(firstPick, pick)) {
+      //Kiểm tra có phải 2 ô hợp lệ không
+      const matches: number[][] = [
+        [firstPick.row, firstPick.column],
+        [pick.row, pick.column]
+      ]
+      this.swapEffect(matches).then(async () => {
+        const data = await this.board.findMatchAt()
+        const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
+        // const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
+        console.log('match: ', matchesApi)
+        if (matchesApi.length) {
+          this.matchResolver(convert(matchesApi))
+        } else {
+          this.swapEffect(matches).then(() => {
+            return 'NOT_MATCH'
+          })
+        }
+      })
+    } else {
+      this?.click(pick, firstPick)
+      return 'SECONDPICK'
     }
   }
   /* ======================== */
@@ -304,9 +330,6 @@ export class BoardRenderer {
             .flat()
         )
       ]
-      // sortArr.forEach((e) => {
-      //   this.moveDown(e, 10 - 1)
-      // })
       this.dropdownTiles(10, sortArr)
       await new Promise((resolve) => setTimeout(resolve, 500))
     })
@@ -322,10 +345,6 @@ export class BoardRenderer {
             .flat()
         )
       ]
-      // sortArr.forEach((e) => {
-      //   console.log('e', e)
-      //   this.moveDown(e, 10 - 1)
-      // })
       this.dropdownTiles(10, sortArr)
       await new Promise((resolve) => setTimeout(resolve, 500))
     }

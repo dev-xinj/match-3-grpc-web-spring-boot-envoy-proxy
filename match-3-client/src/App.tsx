@@ -1,5 +1,6 @@
 import './App.css'
 import BoardCanvas from './components/BoardCanvas'
+import { GameCanvas } from './components/GameCanvas'
 import { config } from './constants/config'
 
 function App() {
@@ -10,7 +11,8 @@ function App() {
           Score: <div id='score'>0</div>
         </div>
         <div className='canvas-frame'>
-          <BoardCanvas config={config.ATTRIBUTE}></BoardCanvas>
+          {/* config={config.ATTRIBUTE} */}
+          <GameCanvas ></GameCanvas>
         </div>
       </div>
     </>
