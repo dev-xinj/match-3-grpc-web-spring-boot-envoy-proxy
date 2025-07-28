@@ -1,9 +1,13 @@
+import { BoardRenderer } from '../../models/BoardRender'
 import { GameContext } from '../context/GameContext'
+import { CommandManager } from '../pattern/CommandManaget'
 export abstract class GameState {
   protected context!: GameContext
-
-  setContext(context: GameContext) {
+  protected boardRender!: BoardRenderer
+  protected commandManager = new CommandManager()
+  setContext(context: GameContext & { getBoardRender: () => BoardRenderer }) {
     this.context = context
+    this.boardRender = context.getBoardRender()
   }
 
   public abstract enter(): void

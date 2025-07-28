@@ -1,4 +1,5 @@
-import { config } from "../../constants/config"
+import { config } from '../../constants/config'
+import { Pair } from '../../types/Pair'
 
 export type AnimationFrameCallback = (progress: number) => void
 export type CanvasEffect = {
@@ -111,5 +112,53 @@ export class EffectManager {
 
       requestAnimationFrame(animate)
     })
+  }
+  swapEffect(
+    firstPick: Pair,
+    secondPick: Pair,
+    cellSize: number,
+    duration: number = 300,
+    drawCell: (row: number, col: number, x: number, y: number) => void,
+    onComplete?: () => void
+  ): void {
+    const { row: row1, column: col1 } = firstPick
+    const { row: row2, column: col2 } = secondPick
+    const x1 = col1 * cellSize
+    const y1 = row1 * cellSize
+    const x2 = col2 * cellSize
+    const y2 = row2 * cellSize
+
+    const start = performance.now()
+    const { ctx } = this
+
+    const animate = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+
+      const currentX1 = x1 + (x2 - x1) * progress
+      const currentY1 = y1 + (y2 - y1) * progress
+
+      const currentX2 = x2 + (x1 - x2) * progress
+      const currentY2 = y2 + (y1 - y2) * progress
+
+      // Clear vùng 2 ô (có thể mở rộng nếu muốn)
+      const minX = Math.min(x1, x2)
+      const minY = Math.min(y1, y2)
+      const clearWidth = Math.abs(x1 - x2) + cellSize
+      const clearHeight = Math.abs(y1 - y2) + cellSize
+      ctx.clearRect(minX, minY, clearWidth, clearHeight)
+
+      // Vẽ lại 2 ô ở vị trí mới
+      drawCell(row1, col1, currentX1, currentY1)
+      drawCell(row2, col2, currentX2, currentY2)
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      } else {
+        onComplete?.()
+      }
+    }
+
+    requestAnimationFrame(animate)
   }
 }

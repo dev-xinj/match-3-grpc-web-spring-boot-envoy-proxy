@@ -10,9 +10,13 @@ export class SwapCommand implements Command {
   ) {}
   execute(): void {
     console.log('//////////')
-    this.boardRender.handlePick(this.firstPick, this.secondPick)
+    try {
+      this.boardRender.board.swap(this.firstPick, this.secondPick)
+    } catch (error) {
+      console.log(error)
+    }
   }
   undo(): void {
-    throw new Error('Method not implemented.')
+    this.boardRender.swapEffectCommand(this.firstPick, this.secondPick)
   }
 }

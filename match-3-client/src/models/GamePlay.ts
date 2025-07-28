@@ -14,7 +14,7 @@ export class GamePlay {
   async play() {
     this.boardRender.loadAll()
     // while (fa) {
-    
+
     // }
   }
 
@@ -29,23 +29,47 @@ export class GamePlay {
       return 'SELECTED'
     }
     if (this.#isAdjacent(this.firstPick, pick)) {
-      //Kiểm tra có phải 2 ô hợp lệ không
-      this.#swapEffect(this.firstPick, pick).then(async () => {
-        const data = await boardRender.board.findMatchAt()
+      this.boardRender.effectManager.swapEffect(
+        this.firstPick,
+        pick,
+        40,
+        300,
+        (row, col, x, y) => {
+          this.boardRender.drawAnimation(row, col, x, y)
+          // ctx.fillStyle = config.COLOR.default
+          // ctx.fillRect(x, y, 40, 40)
+          // ctx.lineWidth = 3
+          // ctx.globalAlpha = 1.0
+          // ctx.strokeStyle = config.COLOR.border
+          // const cell = this.boardRender.board.cells[row][col]
+          // ctx.strokeRect(x, y, 40, 40)
+          // const img = this.boardRender.imgMgr.get(cell.type, cell.index)
 
-        const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
-        // const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
-        console.log('match: ', matchesApi)
-        if (matchesApi.length) {
-          this.boardRender.matchResolver(convert(matchesApi))
+          // ctx.drawImage(img, x, y, 40, 40)
+        },
+        () => {
           this.firstPick = null
-        } else {
-          this.#swapEffect(this.firstPick, pick).then(() => {
-            this.firstPick = null
-            return 'NOT_MATCH'
-          })
+          console.log('Swap xong')
         }
-      })
+      )
+
+      //Kiểm tra có phải 2 ô hợp lệ không
+      // this.#swapEffect(this.firstPick, pick).then(async () => {
+      //   const data = await boardRender.board.findMatchAt()
+
+      //   const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
+      //   // const matchesApi: MatchApi[] = Object.setPrototypeOf(await boardRender.board.findMatchAt(), MatchApi.prototype)
+      //   console.log('match: ', matchesApi)
+      //   if (matchesApi.length) {
+      //     this.boardRender.matchResolver(convert(matchesApi))
+      //     this.firstPick = null
+      //   } else {
+      //     this.#swapEffect(this.firstPick, pick).then(() => {
+      //       this.firstPick = null
+      //       return 'NOT_MATCH'
+      //     })
+      //   }
+      // })
     } else {
       boardRender?.click(pick, this.firstPick)
       this.firstPick = pick

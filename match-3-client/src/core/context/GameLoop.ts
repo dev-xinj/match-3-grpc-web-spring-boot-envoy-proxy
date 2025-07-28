@@ -1,27 +1,33 @@
-import { Match } from '../../types/Pair'
+import { GameStateType } from '../../enums/GameStateType'
 import { EventBus } from '../pattern/EventBus'
 import { GameContext } from './GameContext'
 
 export class GameLoop {
-  private context: GameContext
   private lastTime: number = 0
-  constructor() {
-    this.context = new GameContext()
-    EventBus.subscribe('matchEvent', this.handleMatch.bind(this))
+  private animationFrameId: number | null = null
+  constructor(private context: GameContext) {
+    EventBus.subscribe(GameStateType.WaitingState, this.stop.bind(this))
   }
   public run(currentTime: number) {
-    if (this.lastTime === 0) {
-      this.lastTime = currentTime
+    if (this.animationFrameId === null) {
+      return
     }
     const deltaTime = (currentTime - this.lastTime) / 1000
     this.lastTime = currentTime
     this.context.update(deltaTime)
-    requestAnimationFrame(this.run.bind(this))
+    this.animationFrameId = requestAnimationFrame(this.run.bind(this))
   }
-  private handleMatch(matches: Match[]) {
-    EventBus.publish('scoreUpdate', this.calculateScore(matches))
+  public start(): void {
+    if (this.animationFrameId === null) {
+      this.context.getBoardRender().loadAll()
+      this.lastTime = performance.now()
+      this.animationFrameId = requestAnimationFrame(this.run.bind(this))
+    }
   }
-  private calculateScore(matches: Match[]) {
-    return matches.reduce((score, match) => score + match.pairColumns.length + match.pairRows.length, 0)
+  public stop() {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId)
+      this.animationFrameId = null
+    }
   }
 }

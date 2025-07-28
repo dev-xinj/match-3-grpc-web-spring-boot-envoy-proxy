@@ -25,6 +25,31 @@ export class BoardRenderer {
     this.imgMgr = new Shape(imageUIType)
     this.effectManager = new EffectManager(ctx)
   }
+
+  swapEffectManager(firstPick: Pair, secondPick: Pair, onComplete?: () => void) {
+    this.effectManager.swapEffect(
+      firstPick,
+      secondPick,
+      this.cellSize,
+      200,
+      (row, col, x, y) => this.drawAnimation(row, col, x, y),
+      () => onComplete?.()
+    )
+  }
+
+  drawAnimation(row: number, col: number, x: number, y: number) {
+    const { ctx } = this
+    ctx.fillStyle = config.COLOR.default
+    ctx.fillRect(x, y, this.cellSize, this.cellSize)
+    ctx.lineWidth = 3
+    ctx.globalAlpha = 1.0
+    ctx.strokeStyle = config.COLOR.border
+    const cell = this.board.cells[row][col]
+    ctx.strokeRect(x, y, this.cellSize, this.cellSize)
+    const img = this.imgMgr.get(cell.type, cell.index)
+    ctx.drawImage(img, x, y, this.cellSize, this.cellSize)
+  }
+  /* Refactor ========================= */
   loadAll() {
     this.imgMgr.loadAll().then(async () => {
       this.draw()
@@ -110,6 +135,19 @@ export class BoardRenderer {
         a: Math.min(first[0], second[0]),
         b: Math.max(first[0], second[0])
       }
+    }
+  }
+
+  /* Test */
+  swapEffectCommand(primary: Pair | null, second: Pair) {
+    if (primary != null) {
+      const matches: number[][] = [
+        [primary.row, primary.column],
+        [second.row, second.column]
+      ]
+      this.swapEffect(matches).then(() => {
+        return
+      })
     }
   }
   /* =================== */
