@@ -7,7 +7,7 @@ export const generateBoard = (row: number, col: number): Promise<BoardApi> => {
   const res: Promise<BoardApi> = instance.get('/generate-game', { rows: row, columns: col })
   return res
 }
-export const findMatches = (cells: CellApi[][]): Promise<MatchApi[]> => {
+export const findMatchesService = (cells: CellApi[][]): Promise<MatchApi[]> => {
   const res: Promise<MatchApi[]> = instance.post('/find-matches', { cells })
   return res
 }

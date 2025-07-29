@@ -2,14 +2,15 @@ import { Command } from './Command'
 
 export class CommandManager {
   private history: Command[] = []
-  executeCommand(command: Command) {
-    command.execute()
+  async executeCommand(command: Command): Promise<void> {
+    await command.execute()
     this.history.push(command)
   }
-  undo() {
+  async undo(): Promise<void> {
     const command = this.history.pop()
-    if (command) {
-      command.undo()
+    if (!command) {
+      throw new Error('>>>>>> Not method undo implement')
     }
+    await command.undo()
   }
 }

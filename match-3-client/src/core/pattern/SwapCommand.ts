@@ -8,15 +8,22 @@ export class SwapCommand implements Command {
     private firstPick: Pair,
     private secondPick: Pair
   ) {}
-  execute(): void {
-    console.log('//////////')
+  async execute(): Promise<void> {
     try {
+      console.log('Swaping >>>>> Promise Done()')
+      await this.boardRender.swapEffectManager(this.firstPick, this.secondPick)
       this.boardRender.board.swap(this.firstPick, this.secondPick)
     } catch (error) {
       console.log(error)
     }
   }
-  undo(): void {
-    this.boardRender.swapEffectCommand(this.firstPick, this.secondPick)
+  async undo(): Promise<void> {
+    try {
+      console.log('Swaping >>>>> Undo()')
+      await this.boardRender.swapEffectManager(this.firstPick, this.secondPick)
+      this.boardRender.board.swap(this.firstPick, this.secondPick)
+    } catch (err) {
+      console.log(err)
+    }
   }
 }

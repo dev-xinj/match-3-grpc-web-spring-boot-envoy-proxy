@@ -3,7 +3,7 @@
 import { BoardApi } from '../api/models/BoardApi'
 import { CellApi } from '../api/models/CellApi'
 import * as mock from '../example/MockCell'
-import { findMatches } from '../services/BoardService'
+import { findMatchesService } from '../services/BoardService'
 import { Pair } from '../types/Pair'
 import { Cell } from './Cell'
 export class Board {
@@ -49,7 +49,7 @@ export class Board {
 
   findMatchAt() {
     const find = async () => {
-      return await findMatches(this.convertToCellsAPI())
+      return await findMatchesService(this.convertToCellsAPI())
     }
     return find()
   }

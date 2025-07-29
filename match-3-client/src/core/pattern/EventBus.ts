@@ -22,4 +22,7 @@ export class EventBus {
       handlers.filter((cb) => cb !== callback)
     )
   }
+  public static getListeners() {
+    return this.listeners
+  }
 }

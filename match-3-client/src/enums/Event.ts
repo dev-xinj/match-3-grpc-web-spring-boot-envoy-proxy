@@ -2,5 +2,7 @@ export enum Events {
   ClickedEvent = 'ClickedEvent',
   SwapEvent = 'SwapEvent',
   SwapFailEvent = 'SwapFailEvent',
-  FindMatcherEvent = 'FindMatcherEvent'
+  GameOverEvent = 'GameOverEvent',
+  FindMatcherEvent = 'FindMatcherEvent',
+  ClearingEvent = 'ClearingEvent'
 }

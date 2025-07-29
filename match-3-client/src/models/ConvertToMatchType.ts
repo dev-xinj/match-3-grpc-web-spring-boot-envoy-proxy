@@ -1,5 +1,7 @@
+import { CellApi } from '../api/models/CellApi'
 import { MatchApi } from '../api/models/MatchApi'
 import { Match } from '../types/Pair'
+import { Cell } from './Cell'
 
 export function convert(matchesApi: MatchApi[]): Match[] {
   const arrMatches: Match[] = matchesApi.map((e) => {
@@ -22,4 +24,11 @@ export function convert(matchesApi: MatchApi[]): Match[] {
     return match
   })
   return arrMatches
+}
+export function convertToCellsAPI(cells: Cell[][]): CellApi[][] {
+  return cells.map((e) => {
+    return e.map((i) => {
+      return new CellApi(i.type, i.index, i.isVisited, i.isNew, i.isQueue)
+    })
+  })
 }

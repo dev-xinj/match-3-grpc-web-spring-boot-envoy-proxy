@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { MatchApi } from '../api/models/MatchApi'
 import { config } from '../constants/config'
 import { imageUIType } from '../constants/ItemUI'
@@ -26,15 +27,80 @@ export class BoardRenderer {
     this.effectManager = new EffectManager(ctx)
   }
 
-  swapEffectManager(firstPick: Pair, secondPick: Pair, onComplete?: () => void) {
-    this.effectManager.swapEffect(
-      firstPick,
-      secondPick,
-      this.cellSize,
-      200,
-      (row, col, x, y) => this.drawAnimation(row, col, x, y),
-      () => onComplete?.()
-    )
+  async matchResolverCommand(matches: Match[]) {
+    const mapSkill: TYPECELL[][][] = [
+      [[TYPECELL.BOOM], [TYPECELL.BOOM], [TYPECELL.DESTROY]],
+      [[TYPECELL.BOOM], [TYPECELL.HORIZONTAL, TYPECELL.VERTICAL], [TYPECELL.HORIZONTAL, TYPECELL.DESTROY]],
+      [[TYPECELL.DESTROY], [TYPECELL.DESTROY, TYPECELL.VERTICAL], [TYPECELL.DESTROY, TYPECELL.DESTROY]]
+    ]
+    let newArr: Pair[] = []
+    const promises = []
+    for (const pair of matches) {
+      // listMatches.forEach(element => {
+      newArr = []
+      if (pair.pairColumns.length > 0 && pair.pairRows.length > 0) {
+        const mapIndex = mapSkill[this.numberOfMatches(pair.pairRows)][this.numberOfMatches(pair.pairColumns)]
+        this.mapSpecialShapes(pair.pairRows, mapIndex[0])
+        if (mapIndex.length >= 2) {
+          this.mapSpecialShapes(pair.pairColumns, mapIndex[1])
+        }
+        newArr = pair.pairRows.concat(pair.pairColumns).slice()
+        // newArr = new Set(...new Set(newArr.filter(e => JSON.stringify(e))));
+        newArr = newArr.filter((e) => {
+          return this.board.cells[e.row][e.column].isNew != true
+        })
+      } else {
+        let mapIndex
+        if (pair.pairColumns.length > 0) {
+          mapIndex = this.defineNumberOfMatches(pair.pairColumns, TYPECELL.VERTICAL)
+          this.mapSpecialShapes(pair.pairColumns, mapIndex)
+          newArr = pair.pairColumns.slice()
+        } else if (pair.pairRows.length > 0) {
+          mapIndex = this.defineNumberOfMatches(pair.pairRows, TYPECELL.HORIZONTAL)
+          this.mapSpecialShapes(pair.pairRows, mapIndex)
+          newArr = pair.pairRows.slice()
+        }
+      }
+
+      promises.push(this.removeMatchedCells(newArr))
+    }
+    return { arrPair: newArr, promises } //type MatchCommand
+  }
+
+  /* 
+    arrPair[] vị trí ban đầu ô sẽ drop
+    Sau Drop có thể sẽ va chạm với các ô kỹ năng, và tạo ra thêm các ô sẽ drop mới
+  */
+  async removeEffectCommand(arrPair: Pair[], promises: Promise<Pair[]>[]) {
+    Promise.all(promises).then(async (data) => {
+      data.forEach((item) => {
+        arrPair = arrPair.concat(item)
+      })
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const sortArr = [
+        ...new Set(
+          arrPair
+            .flatMap((e) => e.column)
+            .sort((a, b) => a - b)
+            .flat()
+        )
+      ]
+      this.dropdownTiles(10, sortArr)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    })
+  }
+
+  swapEffectManager(firstPick: Pair, secondPick: Pair) {
+    return new Promise<void>((resolve) => {
+      this.effectManager.swapEffect(
+        firstPick,
+        secondPick,
+        this.cellSize,
+        200,
+        (row, col, x, y) => this.drawAnimation(row, col, x, y),
+        () => resolve()
+      )
+    })
   }
 
   drawAnimation(row: number, col: number, x: number, y: number) {

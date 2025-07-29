@@ -1,3 +1,4 @@
+import { Events } from '../../enums/Event'
 import { GameStateType } from '../../enums/GameStateType'
 import { EventBus } from '../pattern/EventBus'
 import { GameContext } from './GameContext'
@@ -6,7 +7,7 @@ export class GameLoop {
   private lastTime: number = 0
   private animationFrameId: number | null = null
   constructor(private context: GameContext) {
-    EventBus.subscribe(GameStateType.WaitingState, this.stop.bind(this))
+    EventBus.subscribe(Events.GameOverEvent, this.stop.bind(this))
   }
   public run(currentTime: number) {
     if (this.animationFrameId === null) {

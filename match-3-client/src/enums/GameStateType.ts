@@ -6,5 +6,6 @@ export enum GameStateType {
   FillingState = 'FILLING_STATE', //tạo item mới
   SwapingState = 'SWAPING_STATE', //tạo item mới
   SwapFailingState = 'SWAP_FALLING_STATE', //tạo item mới
+  ClearingState = 'CLEARING_STATE', //tạo item mới
   GameOverState = 'GAMEOVER_STATE' // kết thúc game
 }
