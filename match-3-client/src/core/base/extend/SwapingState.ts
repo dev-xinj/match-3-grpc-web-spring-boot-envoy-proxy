@@ -4,7 +4,6 @@ import { EventBus } from '../../pattern/EventBus'
 import { GameState } from '../GameState'
 
 export class SwapingState extends GameState {
-  private isSwapDone = false
   private boundHandleSwapState = this.handleSwapState.bind(this)
   public enter(): void {
     console.log('Swaping >>>>> Enter()')
@@ -18,8 +17,8 @@ export class SwapingState extends GameState {
     console.log('Swaping >>>>> Exit()')
     EventBus.unsubscribe(Events.SwapEvent, this.boundHandleSwapState)
   }
-  public async handleSwapState(data: { firstPick: Pair; secondPick: Pair }) {
+  public async handleSwapState(data: { firstPair: Pair; secondPair: Pair }) {
     console.log('Swaping >>>>> Handle()')
-    await this.context.handleSwapContext(data.firstPick, data.secondPick)
+    await this.context.handleSwapContext(data.firstPair, data.secondPair)
   }
 }

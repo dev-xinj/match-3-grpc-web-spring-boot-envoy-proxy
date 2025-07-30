@@ -4,5 +4,7 @@ export enum Events {
   SwapFailEvent = 'SwapFailEvent',
   GameOverEvent = 'GameOverEvent',
   FindMatcherEvent = 'FindMatcherEvent',
+  FallingEvent = 'FallingEvent',
+  FillingEvent = 'FillingEvent',
   ClearingEvent = 'ClearingEvent'
 }

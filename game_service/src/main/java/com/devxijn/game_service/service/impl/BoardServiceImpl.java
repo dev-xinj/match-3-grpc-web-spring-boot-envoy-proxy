@@ -34,6 +34,27 @@ public class BoardServiceImpl implements BoardService {
 //    }
 
     @Override
+    public List<Match> findMatchesByIndexCell(Board board, Pair firstIndexCell, Pair secondIndexCell) {
+        List<Match> matches = new ArrayList<>();
+        if (firstIndexCell != null && secondIndexCell != null) {
+            matches.addAll(findMatchesByCell(board, firstIndexCell));
+            matches.addAll(findMatchesByCell(board, secondIndexCell));
+        }
+        return matches;
+    }
+
+    private List<Match> findMatchesByCell(Board board, Pair pair) {
+        Integer row = pair.getRow();
+        Integer column = pair.getColumn();
+        List<Match> matches = new ArrayList<>();
+        Match match = findConnectedMatch(row, column, board.getCells()[row][column].getIndex(), board.getCells(), initVisited());
+        if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
+            matches.add(match);
+        }
+        return matches;
+    }
+
+    @Override
     public Board generateGame(Integer rows, Integer columns) {
         return Board.builder()
                 .cells(generateBoard(rows, columns))
@@ -50,19 +71,10 @@ public class BoardServiceImpl implements BoardService {
                 if (cell.isVisited()) {
                     continue;
                 }
-//                if (mapIndex.containsKey(cell.getIndex())) {
-//                    log.info("Doing contain Key");
-//
-//                } else {
-//                    log.info("Do not contain Key");
-//                    mapIndex.put(cell.getIndex(), cell.getIndex());
-//                Match match = elementMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
                 Match match = findConnectedMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
                 if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
                     matches.add(match);
                 }
-//                }
-//                log.info(mapIndex.get(cell.getIndex()).toString());
             }
         }
         return matches;

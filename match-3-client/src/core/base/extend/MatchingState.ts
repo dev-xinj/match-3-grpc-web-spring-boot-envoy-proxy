@@ -1,4 +1,5 @@
 import { Events } from '../../../enums/Event'
+import { Pair } from '../../../types/Pair'
 import { EventBus } from '../../pattern/EventBus'
 import { GameState } from '../GameState'
 
@@ -12,13 +13,13 @@ export class MatchingState extends GameState {
     console.log('Matching >>>>> Update()')
   }
 
-  public exit(): void {
+  public async exit(): Promise<void> {
     console.log('Matching >>>>> Exit()')
     EventBus.unsubscribe(Events.FindMatcherEvent, this.boundHandleMachingState)
   }
 
-  public async handleMachingState() {
+  public async handleMachingState(data: { firstPair: Pair; secondPair: Pair }) {
     console.log('Matching >>>>> Handle()')
-    await this.context.handleMatchingContext()
+    await this.context.handleMatchingContext(data)
   }
 }

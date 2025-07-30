@@ -26,7 +26,91 @@ export class BoardRenderer {
     this.imgMgr = new Shape(imageUIType)
     this.effectManager = new EffectManager(ctx)
   }
+  async handleFallingCellsCommand(promises: Promise<Pair[]>[]) {
+    await Promise.all(promises).then(async (data) => {
+      data.forEach((item) => {
+        const sortArr = [
+          ...new Set(
+            item
+              .flatMap((e) => e.column)
+              .sort((a, b) => a - b)
+              .flat()
+          )
+        ]
+        this.dropdownTiles(10, sortArr)
+      })
+    })
+  }
+  dropColl(rows: number, col: number): number {
+    let emptyRow = rows - 1
+    // Duyệt từ dưới lên
+    for (let row = rows - 1; row >= 0; row--) {
+      if (this.board.cells[row][col].index !== 0) {
+        // Di chuyển khối xuống vị trí trống gần nhất
+        if (emptyRow !== row) {
+          const index = this.queue.findIndex((element) => {
+            return JSON.stringify(element) === JSON.stringify([{ row: row, column: col }]) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
+          })
+          if (index >= 0) {
+            this.queue[index] = [{ row: emptyRow, column: col }]
+          }
+          this._swapCells([
+            [emptyRow, col],
+            [row, col]
+          ])
+        }
+        emptyRow--
+      }
+    }
+    return emptyRow
+  }
+  fillingBoardCommand(emptyRow: number, col: number) {
+    while (emptyRow >= 0) {
+      this.board.cells[emptyRow][col].index = Math.floor(Math.random() * 5) + 1 // Tạo khối mới (1-5)
+      this.fillCell({ row: emptyRow, column: col }, this.board.cells[emptyRow][col])
+      emptyRow--
+    }
+  }
 
+  handleRemoveMatchesCellCommand(pairs: Pair[][]) {
+    if (pairs.length > 0) {
+      return pairs.map((pair) => this.removeMatchedCellsCommand(pair))
+    } else {
+      return []
+    }
+  }
+
+  async removeMatchedCellsCommand(pairs: Pair[]): Promise<Pair[]> {
+    if (!pairs || pairs.length === 0) return []
+
+    const removeDiamon: Pair[] = []
+    const promises: Promise<void>[] = []
+
+    // 1. Clear ô chính
+    for (const pair of pairs) {
+      const cell = this.board.cells[pair.row][pair.column]
+      if (!this.board.cells[pair.row][pair.column].isNew) {
+        // Nếu là skill, ghi lại match đặc biệt
+        if (cell.type !== TYPECELL.NORMAL) {
+          const related = this.#handleSpecialSkill(pair.row, pair.column)
+          promises.push(
+            ...related
+              .filter(([r, c]) => pair.row !== r || pair.column !== c)
+              .map(([r, c]) => this.#removeCellWithEffect({ row: r, column: c }, removeDiamon))
+          )
+        }
+        promises.push(this.#resetCell(pair, removeDiamon))
+      } else {
+        this.board.cells[pair.row][pair.column].isNew = false
+        continue
+      }
+    }
+
+    // 2. Refresh và return kết quả
+    await Promise.all(promises)
+    this.#resetVisitedFlags()
+    return removeDiamon
+  }
   async matchResolverCommand(matches: Match[]) {
     const mapSkill: TYPECELL[][][] = [
       [[TYPECELL.BOOM], [TYPECELL.BOOM], [TYPECELL.DESTROY]],
@@ -34,7 +118,7 @@ export class BoardRenderer {
       [[TYPECELL.DESTROY], [TYPECELL.DESTROY, TYPECELL.VERTICAL], [TYPECELL.DESTROY, TYPECELL.DESTROY]]
     ]
     let newArr: Pair[] = []
-    const promises = []
+    const result: Pair[][] = []
     for (const pair of matches) {
       // listMatches.forEach(element => {
       newArr = []
@@ -61,34 +145,34 @@ export class BoardRenderer {
           newArr = pair.pairRows.slice()
         }
       }
-
-      promises.push(this.removeMatchedCells(newArr))
+      result.push(newArr)
+      // promises.push(this.removeMatchedCells(newArr))
     }
-    return { arrPair: newArr, promises } //type MatchCommand
+    return result //type Pair[]
   }
 
   /* 
     arrPair[] vị trí ban đầu ô sẽ drop
     Sau Drop có thể sẽ va chạm với các ô kỹ năng, và tạo ra thêm các ô sẽ drop mới
   */
-  async removeEffectCommand(arrPair: Pair[], promises: Promise<Pair[]>[]) {
-    Promise.all(promises).then(async (data) => {
-      data.forEach((item) => {
-        arrPair = arrPair.concat(item)
-      })
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      const sortArr = [
-        ...new Set(
-          arrPair
-            .flatMap((e) => e.column)
-            .sort((a, b) => a - b)
-            .flat()
-        )
-      ]
-      this.dropdownTiles(10, sortArr)
-      await new Promise((resolve) => setTimeout(resolve, 500))
-    })
-  }
+  // async removeEffectCommand(arrPair: Pair[], promises: Promise<Pair[]>[]) {
+  //   Promise.all(promises).then(async (data) => {
+  //     data.forEach((item) => {
+  //       arrPair = arrPair.concat(item)
+  //     })
+  //     await new Promise((resolve) => setTimeout(resolve, 300))
+  //     const sortArr = [
+  //       ...new Set(
+  //         arrPair
+  //           .flatMap((e) => e.column)
+  //           .sort((a, b) => a - b)
+  //           .flat()
+  //       )
+  //     ]
+  //     this.dropdownTiles(10, sortArr)
+  //     await new Promise((resolve) => setTimeout(resolve, 500))
+  //   })
+  // }
 
   swapEffectManager(firstPick: Pair, secondPick: Pair) {
     return new Promise<void>((resolve) => {
@@ -116,20 +200,10 @@ export class BoardRenderer {
     ctx.drawImage(img, x, y, this.cellSize, this.cellSize)
   }
   /* Refactor ========================= */
-  loadAll() {
-    this.imgMgr.loadAll().then(async () => {
-      this.draw()
-      // while (true) {
-      // const data = await this.board.findMatchAt()
-      // const matchesApi: MatchApi[] = data.map((e) => Object.setPrototypeOf(e, MatchApi.prototype))
-      // if (matchesApi.length > 0) {
-      //   this.matchResolver(convert(matchesApi))
-      // }
-      // else {
-      //   break
-      // }
-      // }
-    })
+  async loadAll() {
+    await this.imgMgr.loadAll()
+    await this.draw()
+    console.log('>>>>> draw')
   }
   click(primary: Pair, second: Pair | null) {
     const { row, column } = primary
@@ -147,7 +221,7 @@ export class BoardRenderer {
     }
     // this.drawImage(row, col, cell);
   }
-  draw() {
+  async draw() {
     const { ctx, board } = this
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     const rows: number = board.rows
@@ -440,7 +514,7 @@ export class BoardRenderer {
     let newData = []
     while (this.queue.length > 0) {
       newData = await this.removeMatchedCells(this.queue.shift() as Pair[])
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      // await new Promise((resolve) => setTimeout(resolve, 300))
       const sortArr = [
         ...new Set(
           newData
@@ -450,7 +524,7 @@ export class BoardRenderer {
         )
       ]
       this.dropdownTiles(10, sortArr)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
   dropdownTiles(rows: number, arrColumn: number[]) {

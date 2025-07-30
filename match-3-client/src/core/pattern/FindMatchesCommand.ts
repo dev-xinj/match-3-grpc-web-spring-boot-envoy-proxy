@@ -1,10 +1,10 @@
 import { MatchApi } from '../../api/models/MatchApi'
 import { BoardRenderer } from '../../models/BoardRender'
 import { convert } from '../../models/ConvertToMatchType'
-import { MatchCommand } from '../../types/MatchCommand'
+import { Pair } from '../../types/Pair'
 import { Command } from './Command'
 export class FindMatchesCommand implements Command {
-  private result: MatchCommand | null = null
+  private result: Pair[][] | null = null
   constructor(
     private boardRender: BoardRenderer,
     private matchesApi: MatchApi[]

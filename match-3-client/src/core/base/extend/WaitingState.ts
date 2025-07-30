@@ -27,7 +27,7 @@ export class WaitingState extends GameState {
     }
     if (this.isAdjacent(this.firstPick, pick)) {
       this.context.setState(GameStateType.SwapingState)
-      EventBus.publish(Events.SwapEvent, { firstPick: this.firstPick, secondPick: pick })
+      EventBus.publish(Events.SwapEvent, { firstPair: this.firstPick, secondPair: pick })
       this.firstPick = null
     } else {
       this.boardRender?.click(pick as Pair, this.firstPick as Pair)

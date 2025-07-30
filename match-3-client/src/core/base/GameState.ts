@@ -13,4 +13,5 @@ export abstract class GameState {
   public abstract enter(): void
   public abstract update(deltaTime: number): void
   public abstract exit(): void
+  public delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
 }

@@ -1,25 +1,25 @@
+import { Events } from '../../../enums/Event'
+import { Pair } from '../../../types/Pair'
 import { EventBus } from '../../pattern/EventBus'
 import { GameState } from '../GameState'
-import { FillingState } from './FillingState'
-const FALL_DURATION = 3
 export class FallingState extends GameState {
-  private fallTimer: number = 0
-  private fallingComplete: boolean = false
+  private boundHandleFallingState = this.handleFallingState.bind(this)
   public enter(): void {
-    console.log('Entering FallingState')
-    // this.context?.getBoardRender()
-    this.fallingComplete = false
+    console.log('Falling >>>>> Enter()')
+    EventBus.subscribe(Events.FallingEvent, this.boundHandleFallingState)
   }
   public update(deltaTime: number): void {
-    this.fallTimer += deltaTime
-    if (this.fallTimer >= FALL_DURATION) {
-      this.fallingComplete = true
-      this.context.setState(new FillingState())
-    }
+    console.log('Falling >>>>> Update()')
   }
+
   public exit(): void {
-    if (this.fallingComplete) {
-      EventBus.publish('FallingEvent')
-    }
+    console.log('Falling >>>>> Exit()')
+    EventBus.unsubscribe(Events.FallingEvent, this.boundHandleFallingState)
+  }
+
+  public async handleFallingState(promises: Promise<Pair[]>[]) {
+    console.log('Falling >>>>> Handle()')
+    this.delay(300)
+    await this.context.handleFallingContext(promises)
   }
 }

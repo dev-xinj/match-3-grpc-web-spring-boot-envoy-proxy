@@ -18,11 +18,18 @@ export class GameLoop {
     this.context.update(deltaTime)
     this.animationFrameId = requestAnimationFrame(this.run.bind(this))
   }
-  public start(): void {
+  public start() {
     if (this.animationFrameId === null) {
-      this.context.getBoardRender().loadAll()
-      this.lastTime = performance.now()
-      this.animationFrameId = requestAnimationFrame(this.run.bind(this))
+      this.context
+        .getBoardRender()
+        .loadAll()
+        .then(() => {
+          console.log('>>>>> Loop')
+          this.context.setState(GameStateType.MatchingState)
+          EventBus.publish(Events.FindMatcherEvent, null)
+          this.lastTime = performance.now()
+          this.animationFrameId = requestAnimationFrame(this.run.bind(this))
+        })
     }
   }
   public stop() {

@@ -2,6 +2,8 @@ package com.devxijn.game_service.controller;
 
 import com.devxijn.game_service.entity.Board;
 import com.devxijn.game_service.entity.Match;
+import com.devxijn.game_service.entity.Pair;
+import com.devxijn.game_service.entity.SwapRequest;
 import com.devxijn.game_service.service.BoardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,13 @@ public class BoardController {
     @GetMapping("/generate-game")
     public ResponseEntity<Board> generateGame(@RequestParam Integer rows, @RequestParam Integer columns) {
         return ResponseEntity.ok(boardService.generateGame(rows, columns));
+    }
+
+    @PostMapping("/find-matches-swap")
+    public ResponseEntity<?> findMatchesSwap(@RequestBody SwapRequest swapRequest) {
+        log.info(swapRequest.toString());
+//        return ResponseEntity.ok(new SwapRequest());
+        return ResponseEntity.ok(boardService.findMatchesByIndexCell(new Board(swapRequest.getCells()), swapRequest.getFirstPair(), swapRequest.getSecondPair()));
     }
 
     @PostMapping("/find-matches")
