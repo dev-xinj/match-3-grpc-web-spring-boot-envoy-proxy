@@ -1,6 +1,7 @@
 import { MatchApi } from '../../api/models/MatchApi'
 import { Events } from '../../enums/Event'
 import { GameStateType } from '../../enums/GameStateType'
+import { TYPECELL } from '../../enums/TypeCell'
 import { BoardRenderer } from '../../models/BoardRender'
 import { BoardAdapter } from '../../services/BoardAdapter'
 import { Match, Pair } from '../../types/Pair'
@@ -12,6 +13,7 @@ import { SwapingState } from '../base/extend/SwapingState'
 import { WaitingState } from '../base/extend/WaitingState'
 import { GameState } from '../base/GameState'
 import { ClearCommand } from '../pattern/ClearCommand'
+import { Command } from '../pattern/Command'
 import { CommandManager } from '../pattern/CommandManaget'
 import { EventBus } from '../pattern/EventBus'
 import { FallingCommand } from '../pattern/FallingCommand'
@@ -43,7 +45,7 @@ export class GameContext {
   public update(deltaTime: number) {
     this.currentState.update(deltaTime)
   }
-  public async setState(stateKey: string): Promise<void> {
+  public setState(stateKey: string) {
     if (this.currentState) {
       this.currentState.exit()
     }
@@ -67,42 +69,34 @@ export class GameContext {
 
   public async handleMatchingContext(data: { firstPair: Pair; secondPair: Pair }) {
     console.log('Matching >>>>> Context()')
-    if (data != null) {
-      const matchesApi: MatchApi[] = await this.boardAdapter.findMatchesByIndexCellAdapter(
-        this.boardRender.board.cells,
-        data.firstPair,
-        data.secondPair
-      )
-      if (matchesApi.length > 0) {
-        const command = new FindMatchesCommand(this.boardRender, matchesApi)
-        await this.commandManager.executeCommand(command)
-        this.setState(GameStateType.ClearingState)
-        EventBus.publish(Events.ClearingEvent, command.getResult())
-      } else {
+    const checkFindMatches = await this.boardAdapter.checkHasMatchesAdapter(this.boardRender.board.cells)
+    const command = new FindMatchesCommand(this.boardRender, this.boardAdapter, data)
+    if (checkFindMatches.getData()) {
+      await this.commandManager.executeCommand(command)
+    }
+    const pairResult = await command.getResult()
+    if (pairResult !== null && pairResult.length > 0) {
+      this.setState(GameStateType.ClearingState)
+      EventBus.publish(Events.ClearingEvent, pairResult)
+    } else {
+      if (data) {
+        /* Trường hợp có data nghĩa là người dùng swap, ngược lại là logic load game auto scan */
         console.log('Not Found Match. >>>> UNDO')
         this.setState(GameStateType.SwapingState)
         console.log('>>>> UNDO <<<<')
         await this.commandManager.undo()
-        this.setState(GameStateType.WaitingState)
+        // await this.commandManager.undo()
       }
-    } else {
-      const matchesApi: MatchApi[] = await this.boardAdapter.findMatchesAdapter(this.boardRender.board.cells)
-      if (matchesApi.length > 0) {
-        const command = new FindMatchesCommand(this.boardRender, matchesApi)
-        await this.commandManager.executeCommand(command)
-        this.setState(GameStateType.ClearingState)
-        EventBus.publish(Events.ClearingEvent, command.getResult())
-      } else {
-        this.setState(GameStateType.WaitingState)
-      }
+      this.setState(GameStateType.WaitingState)
     }
   }
+
   public async handleClearingContext(arrMatch: Pair[][]) {
     console.log('Clearing >>>>> Context()')
 
     const command = new ClearCommand(this.boardRender, arrMatch)
     await this.commandManager.executeCommand(command)
-    const result = command.getResutl()
+    const result = await command.getResutl()
 
     await this.currentState.delay(300)
     this.setState(GameStateType.FallingState)
@@ -111,38 +105,30 @@ export class GameContext {
   public async handleFallingContext(promises: Promise<Pair[]>[]) {
     console.log('Falling >>>>> Context()')
     const rows = 10
-    await Promise.all(promises).then(async (data) => {
-      await this.currentState.delay(300)
-      for (const item of data) {
-        // data.forEach(async (item) => {
-        const sortArr = [
-          ...new Set(
-            item
-              .flatMap((e) => e.column)
-              .sort((a, b) => a - b)
-              .flat()
-          )
-        ]
-        for (let i = 0; i < sortArr.length; i++) {
-          const col = sortArr[i]
-          const command = new FallingCommand(this.boardRender, col, rows)
-          await this.commandManager.executeCommand(command)
-          const emptyRow = command.getResult()
-          if (emptyRow != null) {
-            await this.handleFillingContext({ emptyRow: emptyRow, col: col })
-          }
+    const results = await Promise.all(promises)
+    await this.currentState.delay(300)
+    for (const item of results) {
+      const columns = [...new Set(item.map((e) => e.column).sort((a, b) => a - b))]
+      for (const col of columns) {
+        const command = new FallingCommand(this.boardRender, col, rows)
+        await this.commandManager.executeCommand(command)
+        const emptyRow = command.getResult()
+        if (emptyRow != null) {
+          await this.handleFillingContext({ emptyRow: emptyRow, col: col })
         }
       }
-    })
+    }
+
     if (this.boardRender.queue.length > 0) {
+      await this.currentState.delay(300)
       this.setState(GameStateType.ClearingState)
       EventBus.publish(Events.ClearingEvent, this.boardRender.queue)
       this.boardRender.queue = []
-      // EventBus.publish(Events.FallingEvent, result)
+    } else {
+      await this.currentState.delay(300)
+      this.setState(GameStateType.MatchingState)
+      EventBus.publish(Events.FindMatcherEvent, null)
     }
-    await this.currentState.delay(300)
-    this.setState(GameStateType.MatchingState)
-    EventBus.publish(Events.FindMatcherEvent, null)
   }
 
   async handleFillingContext(data: { emptyRow: number; col: number }) {

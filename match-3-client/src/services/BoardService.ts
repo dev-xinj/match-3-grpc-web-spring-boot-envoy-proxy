@@ -1,6 +1,7 @@
 import * as instance from '../api/Api'
 import { BoardApi } from '../api/models/BoardApi'
 import { CellApi } from '../api/models/CellApi'
+import { DataResponse } from '../api/models/DataResponse'
 import { MatchApi } from '../api/models/MatchApi'
 import { Pair } from '../types/Pair'
 
@@ -22,5 +23,9 @@ export const findMatchesByIndexCellService = (
     firstPair: firstPair,
     secondPair: secondPair
   })
+  return res
+}
+export const checkHasMatchesService = (cells: CellApi[][]): Promise<DataResponse> => {
+  const res: Promise<DataResponse> = instance.post('/check-matches', { cells })
   return res
 }

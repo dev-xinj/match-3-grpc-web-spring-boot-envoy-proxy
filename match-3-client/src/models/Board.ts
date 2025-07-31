@@ -2,6 +2,7 @@
 // import { baseTypes, SPECIAL, types } from '../constants/types'
 import { BoardApi } from '../api/models/BoardApi'
 import { CellApi } from '../api/models/CellApi'
+import { config } from '../constants/config'
 import * as mock from '../example/MockCell'
 import { findMatchesService } from '../services/BoardService'
 import { Pair } from '../types/Pair'
@@ -45,6 +46,10 @@ export class Board {
     const temp = this.cells[a.row][a.column]
     this.cells[a.row][a.column] = this.cells[b.row][b.column]
     this.cells[b.row][b.column] = temp
+    this.cells[b.row][b.column].attribute.colorBorder = config.COLOR.border
+    this.cells[b.row][b.column].attribute.colorFill = config.COLOR.default
+    this.cells[a.row][a.column].attribute.colorFill = config.COLOR.default
+    this.cells[a.row][a.column].attribute.colorBorder = config.COLOR.border
   }
 
   findMatchAt() {

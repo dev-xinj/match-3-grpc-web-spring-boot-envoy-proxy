@@ -5,6 +5,7 @@ import com.devxijn.game_service.entity.Cell;
 import com.devxijn.game_service.entity.Match;
 import com.devxijn.game_service.entity.Pair;
 import com.devxijn.game_service.enums.CellType;
+import com.devxijn.game_service.response.DataResponse;
 import com.devxijn.game_service.service.BoardService;
 import com.devxijn.game_service.utils.CommonUtil;
 import org.slf4j.Logger;
@@ -28,10 +29,18 @@ public class BoardServiceImpl implements BoardService {
     private final Logger log = LoggerFactory.getLogger(BoardServiceImpl.class);
 //    BoardCore boardCore;
 
-//    @Autowired
+    //    @Autowired
 //    public BoardServiceImpl(BoardCore boardCore) {
 //        this.boardCore = boardCore;
 //    }
+    @Override
+    public DataResponse<Boolean> checkMatches(Board board) {
+        return DataResponse.<Boolean>builder()
+                .message("Successfully")
+                .data(!findMatches(board, true).isEmpty())
+                .build();
+
+    }
 
     @Override
     public List<Match> findMatchesByIndexCell(Board board, Pair firstIndexCell, Pair secondIndexCell) {
@@ -62,7 +71,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public List<Match> findMatches(Board board) {
+    public List<Match> findMatches(Board board, boolean isCheck) {
         List<Match> matches = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
 //            Map<Integer, Integer> mapIndex = new HashMap<>();
@@ -74,11 +83,15 @@ public class BoardServiceImpl implements BoardService {
                 Match match = findConnectedMatch(i, j, board.getCells()[i][j].getIndex(), board.getCells(), initVisited());
                 if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
                     matches.add(match);
+                    if (isCheck) {
+                        return matches;
+                    }
                 }
             }
         }
         return matches;
     }
+
 
     public Cell[][] generateBoard(int row, int column) {
         Cell[][] cells = new Cell[row][column];

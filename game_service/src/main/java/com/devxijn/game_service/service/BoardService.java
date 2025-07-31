@@ -3,6 +3,7 @@ package com.devxijn.game_service.service;
 import com.devxijn.game_service.entity.Board;
 import com.devxijn.game_service.entity.Match;
 import com.devxijn.game_service.entity.Pair;
+import com.devxijn.game_service.response.DataResponse;
 
 import java.util.List;
 
@@ -16,5 +17,7 @@ public interface BoardService {
 
     Board generateGame(Integer rows,Integer columns);
 
-    List<Match> findMatches(Board board);
+    List<Match> findMatches(Board board,boolean isCheck);
+
+    DataResponse<Boolean> checkMatches(Board board);
 }

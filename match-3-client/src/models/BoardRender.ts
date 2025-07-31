@@ -1,9 +1,9 @@
-import { resolve } from 'path'
 import { MatchApi } from '../api/models/MatchApi'
 import { config } from '../constants/config'
 import { imageUIType } from '../constants/ItemUI'
 import { EffectManager } from '../core/logic/EffectManager'
 import { TYPECELL } from '../enums/TypeCell'
+import { BoardAdapter } from '../services/BoardAdapter'
 import { Match, Pair } from '../types/Pair'
 import { getRandomInt } from '../utils/common'
 import { Board } from './Board'
@@ -45,7 +45,7 @@ export class BoardRenderer {
     let emptyRow = rows - 1
     // Duyệt từ dưới lên
     for (let row = rows - 1; row >= 0; row--) {
-      if (this.board.cells[row][col].index !== 0) {
+      if (this.board.cells[row][col].index !== 0 || this.board.cells[row][col].type === TYPECELL.DESTROY) {
         // Di chuyển khối xuống vị trí trống gần nhất
         if (emptyRow !== row) {
           const index = this.queue.findIndex((element) => {
@@ -110,6 +110,32 @@ export class BoardRenderer {
     await Promise.all(promises)
     this.#resetVisitedFlags()
     return removeDiamon
+  }
+  async handleMatchResolverCommand(boardAdapter: BoardAdapter, data: { firstPair: Pair; secondPair: Pair }) {
+    if (data != null) {
+      const { firstPair, secondPair } = data
+      // if (
+      //   /* Kiểm tra swap 2 ô có đặt biệt không */
+      //   this.board.cells[firstPair.row][firstPair.column].type === TYPECELL.NORMAL ||
+      //   this.board.cells[secondPair.row][secondPair.column].type === TYPECELL.NORMAL
+      // ) {
+
+      // }
+      const matches: Match[] = await boardAdapter.findMatchesByIndexCellAdapter(this.board.cells, firstPair, secondPair)
+      if (matches.length > 0) {
+        return this.matchResolverCommand(matches)
+      } else {
+        return null
+      }
+    } else {
+      /* Scan khi load game */
+      const matches: Match[] = await boardAdapter.findMatchesAdapter(this.board.cells)
+      if (matches.length > 0) {
+        return this.matchResolverCommand(matches)
+      } else {
+        return null
+      }
+    }
   }
   async matchResolverCommand(matches: Match[]) {
     const mapSkill: TYPECELL[][][] = [
@@ -721,18 +747,6 @@ export class BoardRenderer {
       this.queue.push([pair])
       return Promise.resolve() // Không xoá liền
     }
-
-    // const fade = this.effectManager.fadeAndShrinkEffect(column, row, 40, 400)
-
-    // // Reset trạng thái cell
-    // cell.index = 0
-    // cell.type = TYPECELL.NORMAL
-    // cell.attribute.colorFill = config.COLOR.default
-    // cell.isQueue = false
-
-    // this.#clearCellByIndex(column, row, cell)
-    // removeDiamon.push(pair)
-
     return this.#resetCell(pair, removeDiamon)
   }
   #resetCell(pair: Pair, removeDiamon: Pair[]): Promise<void> {

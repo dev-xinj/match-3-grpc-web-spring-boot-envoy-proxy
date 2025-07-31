@@ -270,7 +270,7 @@ export function mockCellsAPIWithDefault() {
       cell(5, TYPECELL.NORMAL),
       cell(3, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
-      cell(3, TYPECELL.NORMAL),
+      cell(4, TYPECELL.NORMAL),
       cell(2, TYPECELL.NORMAL)
     ],
     [
@@ -285,12 +285,12 @@ export function mockCellsAPIWithDefault() {
       cell(2, TYPECELL.NORMAL),
       cell(5, TYPECELL.NORMAL),
       cell(4, TYPECELL.NORMAL),
-      cell(3, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
       cell(2, TYPECELL.NORMAL),
-      cell(3, TYPECELL.NORMAL),
+      cell(1, TYPECELL.NORMAL),
+      cell(1, TYPECELL.NORMAL),
       cell(2, TYPECELL.NORMAL),
+      cell(4, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL)
     ],
     [
@@ -307,10 +307,10 @@ export function mockCellsAPIWithDefault() {
       cell(5, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
       cell(2, TYPECELL.NORMAL),
-      cell(3, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
+      cell(1, TYPECELL.NORMAL),
+      cell(2, TYPECELL.NORMAL),
+      cell(4, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL)
     ],
     [
@@ -328,10 +328,10 @@ export function mockCellsAPIWithDefault() {
       cell(2, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
       cell(3, TYPECELL.NORMAL),
+      cell(2, TYPECELL.NORMAL),
+      cell(1, TYPECELL.NORMAL),
       cell(3, TYPECELL.NORMAL),
-      cell(1, TYPECELL.NORMAL),
-      cell(1, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL)
+      cell(4, TYPECELL.NORMAL)
     ],
     [
       cell(3, TYPECELL.NORMAL),
@@ -349,9 +349,9 @@ export function mockCellsAPIWithDefault() {
       cell(5, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
       cell(1, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL),
+      cell(4, TYPECELL.NORMAL),
       cell(3, TYPECELL.NORMAL),
-      cell(2, TYPECELL.NORMAL)
+      cell(4, TYPECELL.NORMAL)
     ],
     [
       cell(4, TYPECELL.NORMAL),

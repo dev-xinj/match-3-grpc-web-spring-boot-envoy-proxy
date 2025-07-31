@@ -15,7 +15,7 @@ export class ClearCommand implements Command {
   async undo(): Promise<void> {
     console.log('ClearCommand >>>>> Undo()')
   }
-  public getResutl() {
+  public async getResutl() {
     return this.result
   }
 }

@@ -18,7 +18,6 @@ export class ClearingState extends GameState {
   }
   private async handleClearingState(arrMatch: Pair[][]) {
     console.log('Clearing >>>>> Handle()')
-    this.delay(300)
     await this.context.handleClearingContext(arrMatch)
   }
 }
