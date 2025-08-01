@@ -1,6 +1,6 @@
 import { BoardRenderer } from '../../models/BoardRender'
 import { GameContext } from '../context/GameContext'
-import { CommandManager } from '../pattern/CommandManaget'
+import { CommandManager } from '../pattern/command/base/CommandManaget'
 export abstract class GameState {
   protected context!: GameContext
   protected boardRender!: BoardRenderer

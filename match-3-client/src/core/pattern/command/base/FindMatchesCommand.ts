@@ -1,7 +1,7 @@
-import { BoardRenderer } from '../../models/BoardRender'
-import { BoardAdapter } from '../../services/BoardAdapter'
-import { Pair } from '../../types/Pair'
-import { Command } from './Command'
+import { BoardRenderer } from '../../../../models/BoardRender'
+import { BoardAdapter } from '../../../../services/BoardAdapter'
+import { Pair } from '../../../../types/Pair'
+import { Command } from '../Command'
 export class FindMatchesCommand implements Command {
   private result: Promise<Pair[][] | null> | null = null
   constructor(

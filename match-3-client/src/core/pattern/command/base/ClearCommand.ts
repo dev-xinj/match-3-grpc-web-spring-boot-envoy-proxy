@@ -1,6 +1,6 @@
-import { BoardRenderer } from '../../models/BoardRender'
-import { Pair } from '../../types/Pair'
-import { Command } from './Command'
+import { BoardRenderer } from '../../../../models/BoardRender'
+import { Pair } from '../../../../types/Pair'
+import { Command } from '../Command'
 
 export class ClearCommand implements Command {
   private result: Promise<Pair[]>[] | null = null

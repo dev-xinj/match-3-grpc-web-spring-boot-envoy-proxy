@@ -1,5 +1,5 @@
-import { BoardRenderer } from '../../models/BoardRender'
-import { Command } from './Command'
+import { BoardRenderer } from '../../../../models/BoardRender'
+import { Command } from '../Command'
 
 export class FillingCommand implements Command {
   constructor(
