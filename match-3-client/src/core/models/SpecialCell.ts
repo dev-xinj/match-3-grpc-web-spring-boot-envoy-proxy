@@ -1,7 +1,7 @@
-import { SkillStrategy } from '../pattern/strategy/SkillStrategy'
+import { SkillStrategy } from '../pattern/strategies/SkillStrategy'
 import { BaseCell } from './BaseCell'
-import { CellPosition } from './CellPosition'
-import { Main } from './Main'
+import { CellPosition } from '../main/CellPosition'
+import { Main } from '../main/Main'
 
 export abstract class SpecialCell extends BaseCell {
   protected skill: SkillStrategy

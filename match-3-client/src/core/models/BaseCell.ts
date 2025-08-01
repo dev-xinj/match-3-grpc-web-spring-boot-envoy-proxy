@@ -1,5 +1,5 @@
-import { CellType } from '../../enums/CellType'
-import { CellPosition } from './CellPosition'
+import { CellType } from '../main/CellType'
+import { CellPosition } from '../main/CellPosition'
 
 export abstract class BaseCell {
   public position: CellPosition

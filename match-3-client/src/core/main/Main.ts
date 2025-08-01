@@ -1,4 +1,4 @@
-import { BaseCell } from './BaseCell'
+import { BaseCell } from '../models/BaseCell'
 import { CellPosition } from './CellPosition'
 
 export class Main {

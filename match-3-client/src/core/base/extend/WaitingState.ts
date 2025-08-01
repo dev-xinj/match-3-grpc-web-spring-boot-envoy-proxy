@@ -1,7 +1,7 @@
 import { Events } from '../../../enums/Event'
 import { GameStateType } from '../../../enums/GameStateType'
 import { Pair } from '../../../types/Pair'
-import { EventBus } from '../../pattern/EventBus'
+import { EventBus } from '../../pattern/events/EventBus'
 import { GameState } from '../GameState'
 
 export class WaitingState extends GameState {

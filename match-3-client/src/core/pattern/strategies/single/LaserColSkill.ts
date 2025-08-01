@@ -1,6 +1,6 @@
-import { CellPosition } from '../../models/CellPosition'
-import { Main } from '../../models/Main'
-import { SkillStrategy } from './SkillStrategy'
+import { CellPosition } from '../../../main/CellPosition'
+import { Main } from '../../../main/Main'
+import { SkillStrategy } from '../SkillStrategy'
 
 export class LaserColSkill implements SkillStrategy {
   execute(position: CellPosition, main: Main): void {

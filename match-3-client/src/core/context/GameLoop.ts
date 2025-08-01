@@ -1,6 +1,6 @@
 import { Events } from '../../enums/Event'
 import { GameStateType } from '../../enums/GameStateType'
-import { EventBus } from '../pattern/EventBus'
+import { EventBus } from '../pattern/events/EventBus'
 import { GameContext } from './GameContext'
 
 export class GameLoop {
