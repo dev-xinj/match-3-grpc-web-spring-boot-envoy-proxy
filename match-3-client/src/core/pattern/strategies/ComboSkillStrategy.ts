@@ -1,5 +1,5 @@
 import { SpecialCell } from '../../models/SpecialCell'
 
-export interface ComboStrategy {
+export interface ComboSkillStrategy {
   execute(firstCell: SpecialCell, secondCell: SpecialCell): void
 }

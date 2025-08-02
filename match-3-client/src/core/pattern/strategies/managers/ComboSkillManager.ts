@@ -7,10 +7,10 @@ import { DoubleSameSkill } from '../combo/DoubleSameSkill'
 import { LaserWithBombSkill } from '../combo/LaserWithBombSkill'
 import { SameWithBombSkill } from '../combo/SameWithBombSkill'
 import { SameWithLaserSkill } from '../combo/SameWithLaserSkill'
-import { ComboStrategy } from '../RuleStrategy'
+import { ComboSkillStrategy } from '../ComboSkillStrategy'
 
-export class CellComboManager {
-  private rules: Map<ComboType, ComboStrategy> = new Map()
+export class ComboSkillManager {
+  private rules: Map<ComboType, ComboSkillStrategy> = new Map()
   constructor() {
     // Đăng ký quy tắc kết hợp trực tiếp trong constructor
     this.registerRule(CellType.BOMB, CellType.BOMB, new DoubleBombSkill())
@@ -21,7 +21,7 @@ export class CellComboManager {
     this.registerRule(CellType.SAME, CellType.SAME, new DoubleSameSkill())
   }
   /* Đăng ký rule đề quản lý */
-  private registerRule(firstType: CellType, secondType: CellType, combo: ComboStrategy): void {
+  private registerRule(firstType: CellType, secondType: CellType, combo: ComboSkillStrategy): void {
     const key = this.defineCombo(firstType, secondType)
     this.rules.set(ComboType[ComboType[key]], combo)
   }

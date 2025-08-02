@@ -1,12 +1,12 @@
-import { SkillStrategy } from '../pattern/strategies/SkillStrategy'
-import { BaseCell } from './BaseCell'
 import { CellPosition } from '../main/CellPosition'
 import { Main } from '../main/Main'
+import { BasicSkillStrategy } from '../pattern/strategies/BasicSkillStrategy'
+import { BaseCell } from './BaseCell'
 
 export abstract class SpecialCell extends BaseCell {
-  protected skill: SkillStrategy
+  protected skill: BasicSkillStrategy
 
-  constructor(position: CellPosition, color: string, skill: SkillStrategy) {
+  constructor(position: CellPosition, color: string, skill: BasicSkillStrategy) {
     super(position, color)
     this.skill = skill
   }

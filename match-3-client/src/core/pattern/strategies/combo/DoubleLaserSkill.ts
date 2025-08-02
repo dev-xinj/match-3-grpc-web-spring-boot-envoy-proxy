@@ -1,8 +1,7 @@
-import { exec } from 'child_process'
 import { SpecialCell } from '../../../models/SpecialCell'
-import { ComboStrategy } from '../RuleStrategy'
+import { ComboSkillStrategy } from '../ComboSkillStrategy'
 
-export class DoubleLaserSkill implements ComboStrategy {
+export class DoubleLaserSkill implements ComboSkillStrategy {
   execute(firstCell: SpecialCell, secondCell: SpecialCell): void {
     console.log('DoubleLaser >>> active executed')
   }

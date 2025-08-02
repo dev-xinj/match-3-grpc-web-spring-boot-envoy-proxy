@@ -42,8 +42,8 @@ export class Main {
     //xử lý xóa
   }
   //Phương thức xóa Cell cùng loại
-  clearAllCellsOfSameType(position: CellPosition): void {
-    console.log(`Xóa tất cả item cùng màu với item tại (${position.x}, ${position.y})`)
+  clearAllCellsOfSameType(position: CellPosition, srcCell: BaseCell): void {
+    console.log(`Xóa tất cả item ${srcCell.color} cùng màu với item tại (${position.row}, ${position.col})`)
     // Logic xóa item cùng loại
   }
 }

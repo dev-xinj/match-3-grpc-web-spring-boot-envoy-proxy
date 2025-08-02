@@ -1,7 +1,7 @@
 import { SpecialCell } from '../../../models/SpecialCell'
-import { ComboStrategy } from '../RuleStrategy'
+import { ComboSkillStrategy } from '../ComboSkillStrategy'
 
-export class SameWithBombSkill implements ComboStrategy {
+export class SameWithBombSkill implements ComboSkillStrategy {
   execute(firstCell: SpecialCell, secondCell: SpecialCell): void {
     console.log('SameWithBomb >>> active executed')
   }

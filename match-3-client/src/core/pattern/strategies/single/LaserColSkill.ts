@@ -1,8 +1,8 @@
 import { CellPosition } from '../../../main/CellPosition'
 import { Main } from '../../../main/Main'
-import { SkillStrategy } from '../SkillStrategy'
+import { BasicSkillStrategy } from '../BasicSkillStrategy'
 
-export class LaserColSkill implements SkillStrategy {
+export class LaserColSkill implements BasicSkillStrategy {
   execute(position: CellPosition, main: Main): void {
     console.log('Laser Col >>> Skill executed')
     main.clearColumn(position)
