@@ -4,9 +4,20 @@ import { CellPosition } from '../main/CellPosition'
 export abstract class BaseCell {
   public position: CellPosition
   public abstract type: CellType
-  public color: string
-  constructor(position: CellPosition, color: string) {
+  public index: number
+  public attribute: Attribute
+  constructor(position: CellPosition, index: number, attribute: Attribute) {
     this.position = position
-    this.color = color
+    this.index = index
+    this.attribute = attribute
+  }
+}
+export class Attribute {
+  colorFill: string
+  colorBorder: string
+
+  constructor(colorFill: string, colorBorder: string) {
+    this.colorFill = colorFill
+    this.colorBorder = colorBorder
   }
 }

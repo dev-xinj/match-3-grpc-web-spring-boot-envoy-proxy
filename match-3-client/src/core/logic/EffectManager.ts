@@ -16,33 +16,6 @@ export class EffectManager {
     this.ctx = ctx
   }
 
-  // playExplosionEffect(effect: CanvasEffect) {
-  //   const { x, y, size, duration, onComplete } = effect
-  //   const start = performance.now()
-
-  //   const draw = (now: number) => {
-  //     const elapsed = now - start
-  //     const progress = Math.min(elapsed / duration, 1)
-  //     const alpha = 1 - progress
-  //     const scale = 1 + progress * 1.5 // phóng to dần
-
-  //     this.ctx.save()
-  //     this.ctx.globalAlpha = alpha
-  //     this.ctx.fillStyle = 'yellow'
-  //     this.ctx.beginPath()
-  //     this.ctx.arc(x + size / 2, y + size / 2, (size / 2) * scale, 0, Math.PI * 2)
-  //     this.ctx.fill()
-  //     this.ctx.restore()
-
-  //     if (progress < 1) {
-  //       requestAnimationFrame(draw)
-  //     } else {
-  //       onComplete?.()
-  //     }
-  //   }
-
-  //   requestAnimationFrame(draw)
-  // }
   playExplosionEffect(effect: CanvasEffect) {
     const { x, y, size, duration, onComplete } = effect
     const start = performance.now()
