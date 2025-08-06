@@ -1,12 +1,12 @@
-import { TYPECELL } from '../../enums/TypeCell'
+import { CellType } from '../../core/main/CellType'
 
 export class CellApi {
-  cellType: TYPECELL
+  cellType: CellType
   index: number
   isNew: boolean
   isQueue: boolean
   isVisited: boolean
-  constructor(cellType: TYPECELL, index: number, isNew: boolean, isQueue: boolean, isVisited: boolean) {
+  constructor(cellType: CellType, index: number, isNew: boolean, isQueue: boolean, isVisited: boolean) {
     this.cellType = cellType
     this.index = index
     this.isNew = isNew

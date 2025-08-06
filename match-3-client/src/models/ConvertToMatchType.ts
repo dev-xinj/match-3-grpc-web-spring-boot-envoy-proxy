@@ -1,22 +1,22 @@
 import { CellApi } from '../api/models/CellApi'
 import { MatchApi } from '../api/models/MatchApi'
+import { BaseCell } from '../core/models/BaseCell'
 import { Match } from '../types/Pair'
-import { Cell } from './Cell'
 
 export function convert(matchesApi: MatchApi[]): Match[] {
   const arrMatches: Match[] = matchesApi.map((e) => {
     const match: Match = {
-      pairRows: [],
-      pairColumns: []
+      matcheRows: [],
+      matcheColumns: []
     }
     if (e.pairColumns != null) {
-      match.pairColumns.push(...e.pairColumns)
+      match.matcheColumns.push(...e.pairColumns)
       // match.pairColumns.map((e) => {
       //   return { row: e.row, column: e.column }
       // })
     }
     if (e.pairRows != null) {
-      match.pairRows.push(...e.pairRows)
+      match.matcheRows.push(...e.pairRows)
       // match.pairRows.map((e) => {
       //   return { row: e.row, column: e.column }
       // })
@@ -25,7 +25,7 @@ export function convert(matchesApi: MatchApi[]): Match[] {
   })
   return arrMatches
 }
-export function convertToCellsAPI(cells: Cell[][]): CellApi[][] {
+export function convertToCellsAPI(cells: BaseCell[][]): CellApi[][] {
   return cells.map((e) => {
     return e.map((i) => {
       return new CellApi(i.type, i.index, i.isVisited, i.isNew, i.isQueue)

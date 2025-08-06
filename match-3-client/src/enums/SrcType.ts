@@ -3,5 +3,5 @@ export enum SrcType {
   bomb = 'bomb',
   laser_row = 'laser_row',
   laser_col = 'laser_col',
-  same = 'same'
+  DESTROY = 'destroy'
 }

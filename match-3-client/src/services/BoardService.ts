@@ -3,7 +3,7 @@ import { BoardApi } from '../api/models/BoardApi'
 import { CellApi } from '../api/models/CellApi'
 import { DataResponse } from '../api/models/DataResponse'
 import { MatchApi } from '../api/models/MatchApi'
-import { Pair } from '../types/Pair'
+import { CellPosition } from '../core/main/CellPosition'
 
 export const generateBoard = (row: number, col: number): Promise<BoardApi> => {
   const res: Promise<BoardApi> = instance.get('/generate-game', { rows: row, columns: col })
@@ -15,8 +15,8 @@ export const findMatchesService = (cells: CellApi[][]): Promise<MatchApi[]> => {
 }
 export const findMatchesByIndexCellService = (
   cells: CellApi[][],
-  firstPair: Pair,
-  secondPair: Pair
+  firstPair: CellPosition,
+  secondPair: CellPosition
 ): Promise<MatchApi[]> => {
   const res: Promise<MatchApi[]> = instance.post('/find-matches-swap', {
     cells: cells,

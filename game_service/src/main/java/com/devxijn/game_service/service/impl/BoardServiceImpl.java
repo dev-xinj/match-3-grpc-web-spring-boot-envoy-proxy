@@ -54,7 +54,7 @@ public class BoardServiceImpl implements BoardService {
 
     private List<Match> findMatchesByCell(Board board, Pair pair) {
         Integer row = pair.getRow();
-        Integer column = pair.getColumn();
+        Integer column = pair.getCol();
         List<Match> matches = new ArrayList<>();
         Match match = findConnectedMatch(row, column, board.getCells()[row][column].getIndex(), board.getCells(), initVisited());
         if (!Objects.isNull(match.getPairRows()) || !Objects.isNull(match.getPairColumns())) {
@@ -117,7 +117,7 @@ public class BoardServiceImpl implements BoardService {
 
             int[][] dirs = {{0, 1}, {1, 0}, {-1, 0}, {0, -1}};
             for (int[] d : dirs) { //duyệt các cạnh kề
-                int nx = p.getRow() + d[0], ny = p.getColumn() + d[1];
+                int nx = p.getRow() + d[0], ny = p.getCol() + d[1];
                 if (nx >= 0 && nx < 10 && ny >= 0 && ny < 18
                         && !visited[nx][ny]
                         && cells[nx][ny].getIndex() == type) {
@@ -131,9 +131,9 @@ public class BoardServiceImpl implements BoardService {
         Match match = new Match();
         if (result.size() >= 3) {
             Integer maxRow = getMostFrequent(result, Pair::getRow);
-            Integer maxCol = getMostFrequent(result, Pair::getColumn);
+            Integer maxCol = getMostFrequent(result, Pair::getCol);
             List<Pair> pairRow = filterByCondition(result, Pair::getRow, maxRow);
-            List<Pair> pairCol = filterByCondition(result, Pair::getColumn, maxCol);
+            List<Pair> pairCol = filterByCondition(result, Pair::getCol, maxCol);
             if (pairRow.size() > 2) {
                 match.setPairRows(pairRow);
             }
@@ -151,7 +151,7 @@ public class BoardServiceImpl implements BoardService {
             List<Pair> pairCol = dfs(i, j, index, isVisited, dx, dy, false, cells);
             List<Pair> pairRow = new LinkedList<>();
             for (Pair pair : pairCol) {
-                pairRow.addAll(dfs(pair.getRow(), pair.getColumn(), index, newVisited, dy, dx, true, cells));
+                pairRow.addAll(dfs(pair.getRow(), pair.getCol(), index, newVisited, dy, dx, true, cells));
             }
             Integer max = getMostFrequent(pairRow, Pair::getRow);
             pairRow = pairRow.stream().filter(e -> {

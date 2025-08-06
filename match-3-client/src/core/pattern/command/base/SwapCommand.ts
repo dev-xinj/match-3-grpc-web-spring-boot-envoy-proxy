@@ -1,18 +1,18 @@
-import { BoardRenderer } from '../../../../models/BoardRender'
-import { Pair } from '../../../../types/Pair'
+import { CellPosition } from '../../../main/CellPosition'
+import { Main } from '../../../main/Main'
 import { Command } from '../Command'
 
 export class SwapCommand implements Command {
   constructor(
-    private boardRender: BoardRenderer,
-    private firstPick: Pair,
-    private secondPick: Pair
+    private board: Main,
+    private firstPick: CellPosition,
+    private secondPick: CellPosition
   ) {}
   async execute(): Promise<void> {
     try {
       console.log('Swaping >>>>> Promise Done()')
-      await this.boardRender.swapEffectManager(this.firstPick, this.secondPick)
-      this.boardRender.board.swap(this.firstPick, this.secondPick)
+      await this.board.swapEffectManager(this.firstPick, this.secondPick)
+      // this.board.board.swap(this.firstPick, this.secondPick)
     } catch (error) {
       console.log(error)
     }
@@ -20,8 +20,8 @@ export class SwapCommand implements Command {
   async undo(): Promise<void> {
     try {
       console.log('Swaping >>>>> Undo()')
-      await this.boardRender.swapEffectManager(this.firstPick, this.secondPick)
-      this.boardRender.board.swap(this.firstPick, this.secondPick)
+      await this.board.swapEffectManager(this.firstPick, this.secondPick)
+      // this.board.swap(this.firstPick, this.secondPick)
     } catch (err) {
       console.log(err)
     }

@@ -1,16 +1,16 @@
-import { BoardRenderer } from '../../../../models/BoardRender'
-import { Pair } from '../../../../types/Pair'
+import { CellPosition } from '../../../main/CellPosition'
+import { Main } from '../../../main/Main'
 import { Command } from '../Command'
 
 export class ClearCommand implements Command {
-  private result: Promise<Pair[]>[] | null = null
+  private result: Promise<CellPosition[]>[] | null = null
   constructor(
-    private boardRender: BoardRenderer,
-    private arrMatch: Pair[][]
+    private board: Main,
+    private arrMatch: CellPosition[][]
   ) {}
   async execute(): Promise<void> {
     console.log('ClearCommand >>>>> Execute()')
-    this.result = this.boardRender.handleRemoveMatchesCellCommand(this.arrMatch)
+    this.result = this.board.handleRemoveMatchesCellCommand(this.arrMatch)
   }
   async undo(): Promise<void> {
     console.log('ClearCommand >>>>> Undo()')

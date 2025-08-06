@@ -1,5 +1,6 @@
 import { Events } from '../../../enums/Event'
 import { Pair } from '../../../types/Pair'
+import { CellPosition } from '../../main/CellPosition'
 import { EventBus } from '../../pattern/events/EventBus'
 import { GameState } from '../GameState'
 
@@ -17,8 +18,8 @@ export class SwapingState extends GameState {
     console.log('Swaping >>>>> Exit()')
     EventBus.unsubscribe(Events.SwapEvent, this.boundHandleSwapState)
   }
-  public async handleSwapState(data: { firstPair: Pair; secondPair: Pair }) {
+  public async handleSwapState(data: { firstCellPosition: CellPosition; secondCellPosition: CellPosition }) {
     console.log('Swaping >>>>> Handle()')
-    await this.context.handleSwapContext(data.firstPair, data.secondPair)
+    await this.context.handleSwapContext(data.firstCellPosition, data.secondCellPosition)
   }
 }

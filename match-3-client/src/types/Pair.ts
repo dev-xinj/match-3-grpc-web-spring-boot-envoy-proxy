@@ -1,8 +1,10 @@
+import { CellPosition } from '../core/main/CellPosition'
+
 export type Pair = {
   row: number
   column: number
 }
 export type Match = {
-  pairRows: Pair[]
-  pairColumns: Pair[]
+  matcheRows: CellPosition[]
+  matcheColumns: CellPosition[]
 }

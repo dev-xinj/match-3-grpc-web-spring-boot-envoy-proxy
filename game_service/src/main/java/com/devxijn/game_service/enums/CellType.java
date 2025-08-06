@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 public enum CellType {
     @JsonProperty("NORMAL")
     NORMAL,
-    @JsonProperty("BOOM")
-    BOOM,
-    @JsonProperty("HORIZONTAL")
-    HORIZONTAL,
-    @JsonProperty("VERTICAL")
-    VERTICAL,
+    @JsonProperty("BOMB")
+    BOMB,
+    @JsonProperty("LASER_ROW")
+    LASER_ROW,
+    @JsonProperty("LASER_COL")
+    LASER_COL,
     @JsonProperty("DESTROY")
     DESTROY;
 

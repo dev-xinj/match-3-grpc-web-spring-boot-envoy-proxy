@@ -1,8 +1,9 @@
+import { CellName } from '../../enums/CellName'
 import { SrcType } from '../../enums/SrcType'
 import { CellType } from '../main/CellType'
-
+// import {laser} from '../../assets'
 export class AssetManager {
-  private images: Map<CellType, HTMLImageElement[]> = new Map()
+  private images: Map<CellType, Map<CellName, HTMLImageElement>> = new Map()
   srcImages: Map<string, string> = new Map()
   constructor(pattern: string) {
     this.loadFromGlob(pattern)
@@ -12,8 +13,8 @@ export class AssetManager {
    * @param pattern - pattern như '../assets/gems/*.png'
    */
   //../assets/items/*.png
-  loadFromGlob(pattern: string): void {
-    const imageModules = import.meta.glob<string>(pattern, {
+  private loadFromGlob(pattern: string): void {
+    const imageModules: Record<string, string> = import.meta.glob('../../assets/temp/*.png', {
       eager: true,
       import: 'default'
     })
@@ -28,28 +29,38 @@ export class AssetManager {
   /* Phân loại images */
   async loadAll() {
     const promises: Promise<void>[] = []
-    for (const path in this.srcImages) {
-      if (path.startsWith(SrcType.bomb)) {
-        promises.push(this.addImage(CellType.BOMB, this.srcImages.get(path) as string))
-      } else if (path.startsWith(SrcType.laser_row)) {
-        promises.push(this.addImage(CellType.LASER_ROW, this.srcImages.get(path) as string))
-      } else if (path.startsWith(SrcType.laser_col)) {
-        promises.push(this.addImage(CellType.LASER_COL, this.srcImages.get(path) as string))
-      } else if (path.startsWith(SrcType.same)) {
-        promises.push(this.addImage(CellType.SAME, this.srcImages.get(path) as string))
+    for (const path of this.srcImages) {
+      if (path[0].startsWith(SrcType.bomb)) {
+        promises.push(this.addImage(CellType.BOMB, path[1]))
+      } else if (path[0].startsWith(SrcType.laser_row)) {
+        promises.push(this.addImage(CellType.LASER_ROW, path[1]))
+      } else if (path[0].startsWith(SrcType.laser_col)) {
+        promises.push(this.addImage(CellType.LASER_COL, path[1]))
+      } else if (path[0].startsWith(SrcType.DESTROY)) {
+        promises.push(this.addImage(CellType.DESTROY, path[1]))
       } else {
-        promises.push(this.addImage(CellType.NORMAL, this.srcImages.get(path) as string))
+        promises.push(this.addImage(CellType.NORMAL, path[1]))
       }
     }
     await Promise.all(promises)
   }
   async addImage(cellType: CellType, src: string) {
     const image = await this.loadImageBySrc(src)
-    const values = this.images.get(cellType)!
-    if (image != null) {
-      values?.push(image)
-      this.images.set(cellType, values)
+
+    if (image === null) {
+      return
     }
+    const values = this.images.get(cellType) ?? new Map<CellName, HTMLImageElement>()
+    const endsSrc = src.split('/').pop()?.split('.')[0]
+    for (const name of Object.values(CellName)) {
+      if (endsSrc?.endsWith(name.toString().toLowerCase())) {
+        values.set(name as CellName, image)
+        break
+      }
+    }
+    // values.push(image)
+    this.images.set(cellType, values)
+    // }
   }
   loadImageBySrc(src: string): Promise<HTMLImageElement | null> {
     if (src) {
@@ -66,9 +77,15 @@ export class AssetManager {
   getImageByTypeAndIndex(cellType: CellType, index: number): HTMLImageElement {
     const img = this.images.get(cellType)
     if (!img) throw new Error(`Image "${cellType}" not found`)
-    return img[index]
+    const keys = Object.values(CellName)
+    const key = keys[index]
+    if (!key) throw new Error(`Image "${key}" not found`)
+    return img.get(keys[index] as CellName)
   }
   clear(): void {
     this.images.clear()
+  }
+  public length() {
+    return this.images.size
   }
 }

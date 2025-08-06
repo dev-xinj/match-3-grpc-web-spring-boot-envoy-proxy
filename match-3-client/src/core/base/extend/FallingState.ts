@@ -1,5 +1,5 @@
 import { Events } from '../../../enums/Event'
-import { Pair } from '../../../types/Pair'
+import { CellPosition } from '../../main/CellPosition'
 import { EventBus } from '../../pattern/events/EventBus'
 import { GameState } from '../GameState'
 export class FallingState extends GameState {
@@ -17,7 +17,7 @@ export class FallingState extends GameState {
     EventBus.unsubscribe(Events.FallingEvent, this.boundHandleFallingState)
   }
 
-  public async handleFallingState(promises: Promise<Pair[]>[]) {
+  public async handleFallingState(promises: Promise<CellPosition[]>[]) {
     console.log('Falling >>>>> Handle()')
     this.delay(300)
     await this.context.handleFallingContext(promises)

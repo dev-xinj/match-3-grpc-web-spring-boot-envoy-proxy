@@ -4,5 +4,5 @@ export enum CellType {
   LASER_ROW = 'LASER_ROW',
   LASER_COL = 'LASER_COL',
   LASER = 'LASER',
-  SAME = 'SAME'
+  DESTROY = 'DESTROY'
 }

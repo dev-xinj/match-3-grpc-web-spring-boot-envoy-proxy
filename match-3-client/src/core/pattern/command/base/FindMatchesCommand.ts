@@ -1,18 +1,18 @@
-import { BoardRenderer } from '../../../../models/BoardRender'
 import { BoardAdapter } from '../../../../services/BoardAdapter'
-import { Pair } from '../../../../types/Pair'
+import { CellPosition } from '../../../main/CellPosition'
+import { Main } from '../../../main/Main'
 import { Command } from '../Command'
 export class FindMatchesCommand implements Command {
-  private result: Promise<Pair[][] | null> | null = null
+  private result: Promise<CellPosition[][] | null> | null = null
   constructor(
-    private boardRender: BoardRenderer,
+    private board: Main,
     private boardAdapter: BoardAdapter,
-    private data: { firstPair: Pair; secondPair: Pair }
+    private data: { firstCellPosition: CellPosition; secondCellPosition: CellPosition }
   ) {}
 
   async execute(): Promise<void> {
     console.log('FindMatchesCommand >>>>> Execute()')
-    this.result = this.boardRender.handleMatchResolverCommand(this.boardAdapter, this.data)
+    this.result = this.board.handleMatchResolverCommand(this.boardAdapter, this.data)
     // this.boardRender.matchResolver(convert(this.matchesApi))
   }
   async undo(): Promise<void> {

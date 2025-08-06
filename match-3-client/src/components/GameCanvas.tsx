@@ -26,7 +26,7 @@ export const GameCanvas = () => {
       const y = e.clientY - rect.top
       const column = Math.floor(x / CELL_SIZE)
       const row = Math.floor(y / CELL_SIZE)
-      EventBus.publish(Events.ClickedEvent, { row: row, column: column })
+      EventBus.publish(Events.ClickedEvent, { row: row, col: column })
     }
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -36,7 +36,7 @@ export const GameCanvas = () => {
 
     canvas?.addEventListener('click', handleClick)
     // Khởi tạo game engine
-    gameContextRef.current = new GameContext(renderer)
+    gameContextRef.current = new GameContext(renderer, ctx)
     const gameLoop = new GameLoop(gameContextRef.current)
     gameLoop.start()
     // Dọn dẹp khi component unmount

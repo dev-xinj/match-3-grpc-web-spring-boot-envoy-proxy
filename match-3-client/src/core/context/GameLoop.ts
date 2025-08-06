@@ -21,14 +21,21 @@ export class GameLoop {
   public start() {
     if (this.animationFrameId === null) {
       this.context
-        .getBoardRender()
-        .loadAll()
-        .then(() => {
-          console.log('>>>>> Loop')
-          this.context.setState(GameStateType.MatchingState)
-          EventBus.publish(Events.FindMatcherEvent, null)
-          this.lastTime = performance.now()
-          this.animationFrameId = requestAnimationFrame(this.run.bind(this))
+        // .getBoardRender()
+        // .loadAll()
+        .loadAllImage()
+        .then((context) => {
+          console.log('Loaded >>>>> Context()')
+          context
+            .getBoard()
+            .draw()
+            .then(() => {
+              console.log('>>>>> Loop')
+              this.context.setState(GameStateType.MatchingState)
+              EventBus.publish(Events.FindMatcherEvent, null)
+              this.lastTime = performance.now()
+              this.animationFrameId = requestAnimationFrame(this.run.bind(this))
+            })
         })
     }
   }

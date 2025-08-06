@@ -1,5 +1,6 @@
 import { Events } from '../../../enums/Event'
 import { Pair } from '../../../types/Pair'
+import { CellPosition } from '../../main/CellPosition'
 import { EventBus } from '../../pattern/events/EventBus'
 import { GameState } from '../GameState'
 
@@ -18,7 +19,7 @@ export class MatchingState extends GameState {
     EventBus.unsubscribe(Events.FindMatcherEvent, this.boundHandleMachingState)
   }
 
-  public async handleMachingState(data: { firstPair: Pair; secondPair: Pair }) {
+  public async handleMachingState(data: { firstPair: CellPosition; secondPair: CellPosition }) {
     console.log('Matching >>>>> Handle()')
     await this.context.handleMatchingContext(data)
   }

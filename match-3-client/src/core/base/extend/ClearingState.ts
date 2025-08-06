@@ -1,5 +1,5 @@
 import { Events } from '../../../enums/Event'
-import { Pair } from '../../../types/Pair'
+import { CellPosition } from '../../main/CellPosition'
 import { EventBus } from '../../pattern/events/EventBus'
 import { GameState } from '../GameState'
 
@@ -16,7 +16,7 @@ export class ClearingState extends GameState {
     console.log('Clearing >>>>> Exit()')
     EventBus.unsubscribe(Events.ClearingEvent, this.boundHandleClearingState)
   }
-  private async handleClearingState(arrMatch: Pair[][]) {
+  private async handleClearingState(arrMatch: CellPosition[][]) {
     console.log('Clearing >>>>> Handle()')
     await this.context.handleClearingContext(arrMatch)
   }

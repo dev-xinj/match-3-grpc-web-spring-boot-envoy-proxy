@@ -2,7 +2,6 @@ package com.devxijn.game_service.controller;
 
 import com.devxijn.game_service.entity.Board;
 import com.devxijn.game_service.entity.Match;
-import com.devxijn.game_service.entity.Pair;
 import com.devxijn.game_service.entity.SwapRequest;
 import com.devxijn.game_service.response.DataResponse;
 import com.devxijn.game_service.service.BoardService;
@@ -40,14 +39,14 @@ public class BoardController {
 
     @PostMapping("/find-matches-swap")
     public ResponseEntity<?> findMatchesSwap(@RequestBody SwapRequest swapRequest) {
-        log.info(swapRequest.toString());
+//        log.info(swapRequest.toString());
 //        return ResponseEntity.ok(new SwapRequest());
         return ResponseEntity.ok(boardService.findMatchesByIndexCell(new Board(swapRequest.getCells()), swapRequest.getFirstPair(), swapRequest.getSecondPair()));
     }
 
     @PostMapping("/find-matches")
     public ResponseEntity<List<Match>> findMatches(@RequestBody Board board) {
-        log.info(board.toString());
+//        log.info(board.toString());
         return ResponseEntity.ok(boardService.findMatches(board, false));
     }
 }

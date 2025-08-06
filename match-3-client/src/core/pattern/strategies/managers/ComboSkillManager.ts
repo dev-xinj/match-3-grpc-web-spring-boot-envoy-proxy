@@ -1,12 +1,13 @@
+import { CellPosition } from '../../../main/CellPosition'
 import { CellType } from '../../../main/CellType'
 import { ComboType } from '../../../main/ComboType'
 import { SpecialCell } from '../../../models/SpecialCell'
+import { DestroyWithBombSkill } from '../combo/DestroyWithBombSkill'
+import { DestroyWithLaserSkill } from '../combo/DestroyWithLaserSkill'
 import { DoubleBombSkill } from '../combo/DoubleBombSkill'
+import { DoubleDestroySkill } from '../combo/DoubleDestroySkill'
 import { DoubleLaserSkill } from '../combo/DoubleLaserSkill'
-import { DoubleSameSkill } from '../combo/DoubleSameSkill'
 import { LaserWithBombSkill } from '../combo/LaserWithBombSkill'
-import { SameWithBombSkill } from '../combo/SameWithBombSkill'
-import { SameWithLaserSkill } from '../combo/SameWithLaserSkill'
 import { ComboSkillStrategy } from '../ComboSkillStrategy'
 
 export class ComboSkillManager {
@@ -16,9 +17,9 @@ export class ComboSkillManager {
     this.registerRule(CellType.BOMB, CellType.BOMB, new DoubleBombSkill())
     this.registerRule(CellType.LASER, CellType.BOMB, new LaserWithBombSkill())
     this.registerRule(CellType.LASER, CellType.LASER, new DoubleLaserSkill())
-    this.registerRule(CellType.SAME, CellType.BOMB, new SameWithBombSkill())
-    this.registerRule(CellType.SAME, CellType.LASER, new SameWithLaserSkill())
-    this.registerRule(CellType.SAME, CellType.SAME, new DoubleSameSkill())
+    this.registerRule(CellType.DESTROY, CellType.BOMB, new DestroyWithBombSkill())
+    this.registerRule(CellType.DESTROY, CellType.LASER, new DestroyWithLaserSkill())
+    this.registerRule(CellType.DESTROY, CellType.DESTROY, new DoubleDestroySkill())
   }
   /* Đăng ký rule đề quản lý */
   private registerRule(firstType: CellType, secondType: CellType, combo: ComboSkillStrategy): void {
@@ -26,14 +27,25 @@ export class ComboSkillManager {
     this.rules.set(ComboType[ComboType[key]], combo)
   }
   /* Nhận hai cell đặc biệt và xử lý kỹ năng tương ứng */
-  public handleCombo(firstCell: SpecialCell, secondCell: SpecialCell): void {
+  public handleCombo(
+    firstCell: SpecialCell,
+    secondCell: SpecialCell,
+    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[][]
+  ): CellPosition[][] {
     const key1 = this.defineCombo(firstCell.type, secondCell.type)
-    const key2 = this.defineCombo(firstCell.type, secondCell.type)
-
+    const key2 = this.defineCombo(secondCell.type, firstCell.type)
+    let temp = key1 /* Lưu trữ key dùng được */
     let rule = this.rules.get(ComboType[ComboType[key1]])
     if (!rule) {
       rule = this.rules.get(ComboType[ComboType[key2]])
+      temp = key2
     }
+    if (rule) {
+      return rule.execute(firstCell, secondCell, temp, callback)
+    } else {
+      console.log('Combo Skill >>>> NOT FOUND')
+    }
+    return []
   }
   /* Format kiểu Laser_row hoặc laser_column thành laser */
   private formatCellType(cellType: CellType): CellType {

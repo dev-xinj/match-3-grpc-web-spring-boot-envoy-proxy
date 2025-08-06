@@ -1,9 +1,9 @@
-import { Pair } from '../../types/Pair'
+import { CellPosition } from '../../core/main/CellPosition'
 
 export class MatchApi {
-  pairRows: Pair[]
-  pairColumns: Pair[]
-  constructor(pairRows: Pair[], pairColumns: Pair[]) {
+  pairRows: CellPosition[]
+  pairColumns: CellPosition[]
+  constructor(pairRows: CellPosition[], pairColumns: CellPosition[]) {
     this.pairRows = pairRows
     this.pairColumns = pairColumns
   }

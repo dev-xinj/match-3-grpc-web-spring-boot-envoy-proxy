@@ -1,16 +1,16 @@
-import { BoardRenderer } from '../../../../models/BoardRender'
+import { Main } from '../../../main/Main'
 import { Command } from '../Command'
 
 export class FillingCommand implements Command {
   constructor(
-    private boardRender: BoardRenderer,
+    private board: Main,
     private emptyRow: number,
     private col: number
   ) {}
 
   async execute(): Promise<void> {
     console.log('Filling >>>>> Execute()')
-    this.boardRender.fillingBoardCommand(this.emptyRow, this.col)
+    this.board.fillingBoardCommand(this.emptyRow, this.col)
     return Promise.resolve()
   }
   undo(): Promise<void> {
