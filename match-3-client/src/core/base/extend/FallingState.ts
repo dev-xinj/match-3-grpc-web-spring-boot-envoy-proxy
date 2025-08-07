@@ -17,9 +17,9 @@ export class FallingState extends GameState {
     EventBus.unsubscribe(Events.FallingEvent, this.boundHandleFallingState)
   }
 
-  public async handleFallingState(promises: Promise<CellPosition[]>[]) {
+  public async handleFallingState(resutls: CellPosition[]) {
     console.log('Falling >>>>> Handle()')
     this.delay(300)
-    await this.context.handleFallingContext(promises)
+    await this.context.handleFallingContext(resutls)
   }
 }

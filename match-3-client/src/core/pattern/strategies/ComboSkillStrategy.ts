@@ -7,6 +7,6 @@ export interface ComboSkillStrategy {
     firstCell: SpecialCell,
     secondCell: SpecialCell,
     comboType: ComboType,
-    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[][]
-  ): CellPosition[][]
+    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[]
+  ): CellPosition[]
 }

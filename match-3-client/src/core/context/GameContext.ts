@@ -143,7 +143,7 @@ export class GameContext {
     }
   }
 
-  public async handleClearingContext(arrMatch: CellPosition[][]) {
+  public async handleClearingContext(arrMatch: CellPosition[]) {
     console.log('Clearing >>>>> Context()')
 
     const command = new ClearCommand(this.board, arrMatch)
@@ -154,30 +154,31 @@ export class GameContext {
     this.setState(GameStateType.FallingState)
     EventBus.publish(Events.FallingEvent, result)
   }
-  public async handleFallingContext(promises: Promise<CellPosition[]>[]) {
+  public async handleFallingContext(results: CellPosition[]) {
     console.log('Falling >>>>> Context()')
     const rows = 10
-    const results = await Promise.all(promises)
+    // const results = await Promise.all(promises)
     await this.currentState.delay(300)
-    for (const item of results) {
-      /* lọc các column đã có trong board không lưu thêm */
-      const columns = [...new Set(item.map((e) => e.col).sort((a, b) => a - b))]
-      for (const col of columns) {
-        const command = new FallingCommand(this.board, col, rows)
-        await this.commandManager.executeCommand(command)
-        const emptyRow = command.getResult()
-        if (emptyRow != null) {
-          await this.handleFillingContext({ emptyRow: emptyRow, col: col })
-        }
+    // for (const item of results) {
+    /* lọc các column đã có trong board không lưu thêm */
+    const columns = Array.from(new Set(results.map((e) => e.col).sort((a, b) => a - b)))
+    for (const col of columns) {
+      const command = new FallingCommand(this.board, col, rows)
+      await this.commandManager.executeCommand(command)
+      const emptyRow = command.getResult()
+      if (emptyRow != null) {
+        await this.handleFillingContext({ emptyRow: emptyRow, col: col })
       }
+      // }
     }
 
     if (this.board.getQueue().length > 0) {
       console.log('Falling QUEUE >>>>> Context()')
       await this.currentState.delay(300)
-      this.setState(GameStateType.ClearingState)
-      EventBus.publish(Events.ClearingEvent, this.board.getQueue())
-      this.board.setQueue([])
+      // this.setState(GameStateType.ClearingState)
+      // EventBus.publish(Events.ClearingEvent, this.board.getQueue())
+      // this.board.setQueue([])
+      await this.handleQueueContext()
     } else {
       await this.currentState.delay(300)
       this.setState(GameStateType.MatchingState)
@@ -191,7 +192,14 @@ export class GameContext {
     await this.commandManager.executeCommand(command)
     this.setState(GameStateType.WaitingState)
   }
-
+  /* handleQueue context */
+  async handleQueueContext() {
+    const cellRemove = await this.board.handleRemoveQueue()
+    if (cellRemove) {
+      this.setState(GameStateType.FallingState)
+      EventBus.publish(Events.FallingEvent, cellRemove)
+    }
+  }
   /* Handle Combo Skill */
   async handleComboSkillContext(first: CellPosition, second: CellPosition) {
     console.log('Combo Skill >>>>> Context()')

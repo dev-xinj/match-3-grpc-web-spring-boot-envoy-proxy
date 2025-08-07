@@ -8,8 +8,8 @@ export class DoubleLaserSkill implements ComboSkillStrategy {
     firstCell: SpecialCell,
     secondCell: SpecialCell,
     comboType: ComboType,
-    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[][]
-  ): CellPosition[][] {
+    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[]
+  ): CellPosition[]{
     console.log('DoubleLaser >>> active executed')
     return callback(firstCell, secondCell, comboType)
   }

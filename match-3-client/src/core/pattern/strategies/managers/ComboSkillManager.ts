@@ -30,8 +30,8 @@ export class ComboSkillManager {
   public handleCombo(
     firstCell: SpecialCell,
     secondCell: SpecialCell,
-    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[][]
-  ): CellPosition[][] {
+    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[]
+  ): CellPosition[] {
     const key1 = this.defineCombo(firstCell.type, secondCell.type)
     const key2 = this.defineCombo(secondCell.type, firstCell.type)
     let temp = key1 /* Lưu trữ key dùng được */

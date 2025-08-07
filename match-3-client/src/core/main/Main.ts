@@ -1,4 +1,5 @@
 import { config } from '../../constants/config'
+import { CellName } from '../../enums/CellName'
 import { BoardAdapter } from '../../services/BoardAdapter'
 import { Localtion } from '../../types/Localtion'
 import { Match } from '../../types/Pair'
@@ -28,7 +29,7 @@ export class Main {
   private effectPools: Map<string, EffectPool>
   private ctx: CanvasRenderingContext2D
   private preKey: number | null = null
-  private queue: CellPosition[][] = []
+  private queue: CellPosition[] = []
   private comboSkillManager: ComboSkillManager
   //private possibleColors" string[]=[]
   constructor(
@@ -248,17 +249,27 @@ export class Main {
       result.push(newArr)
       // promises.push(this.removeMatchedCells(newArr))
     }
-    return result //type Pair[]
+    return result.flatMap((e) => e) //type Pair[]
   }
+  /* Delay */
+  public delay = (ms: number) => new Promise((res) => setTimeout(res, ms))
   /* Clearing Command */
-  handleRemoveMatchesCellCommand(pairs: CellPosition[][]) {
+  handleRemoveMatchesCellCommand(pairs: CellPosition[]) {
     if (pairs.length > 0) {
-      return pairs.map((pair) => this.removeMatchedCellsCommand(pair))
+      return this.removeMatchedCellsCommand(pairs)
+      // return Promise.all(pairs.map((pair) => this.removeMatchedCellsCommand(pair)))
+      // return pairs.map(async (pair) => await this.removeMatchedCellsCommand(pair))
     } else {
-      return []
+      return Promise.resolve([])
     }
   }
-
+  /* Queue Command */
+  async handleRemoveQueue() {
+    const queue = this.getQueue().shift()
+    if (queue) {
+      return await this.removeMatchedCellsCommand([queue])
+    }
+  }
   async removeMatchedCellsCommand(pairs: CellPosition[]): Promise<CellPosition[]> {
     if (!pairs || pairs.length === 0) return []
 
@@ -267,9 +278,9 @@ export class Main {
 
     // 1. Clear ô chính
     for (const pair of pairs) {
-      const cell = this.cells[pair.row][pair.col]
+      const cell = this.getCellAt(pair)
       /* kiểm tra xem cell này có phải vừa tạo thành từ match không */
-      if (!this.getCellAt({ row: pair.row, col: pair.col }).isNew) {
+      if (!cell.isNew) {
         // Nếu là skill, ghi lại match đặc biệt
         if (cell instanceof SpecialCell) {
           /* Effect Skill */
@@ -278,7 +289,7 @@ export class Main {
           promises.push(
             ...related
               .filter(([r, c]) => pair.row !== r || pair.col !== c)
-              .map(([r, c]) => this.removeCellWithEffect({ row: r, col: c }, removeDiamon))
+              .map(async ([r, c]) => await this.removeCellWithEffect({ row: r, col: c }, removeDiamon))
           )
         }
         promises.push(this.resetCell(pair, removeDiamon))
@@ -290,6 +301,7 @@ export class Main {
 
     // 2. Refresh và return kết quả
     await Promise.all(promises)
+    // await this.delay(300)
     this.resetVisitedFlags()
     return removeDiamon
   }
@@ -303,7 +315,12 @@ export class Main {
       if (cell.type !== CellType.DESTROY) {
         this.preKey = cell.index
       }
-      this.queue.push([pair])
+      const index = this.queue.findIndex((element) => {
+        return JSON.stringify(element) === JSON.stringify({ row: row, col: col }) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
+      })
+      if (index < 0) {
+        this.queue.push(pair)
+      }
       return Promise.resolve() // Không xoá liền
     }
     return this.resetCell(pair, removeDiamon)
@@ -315,7 +332,7 @@ export class Main {
     const cell = new NormalCell(0, new Attribute(config.COLOR.default, config.COLOR.border))
     const fade = this.effectManager.fadeAndShrinkEffect(col, row, 40, 400)
     this.addCell(pair, cell)
-    this.clearCellByIndex(col, row, cell)
+    // this.clearCellByIndex(col, row, cell)
     removeDiamon.push(pair)
     return fade
   }
@@ -345,7 +362,7 @@ export class Main {
         break
       }
       case CellType.DESTROY: {
-        matches = this.#clearByKey()
+        matches = this.clearByKey()
         break
       }
     }
@@ -365,10 +382,10 @@ export class Main {
         // Di chuyển khối xuống vị trí trống gần nhất
         if (emptyRow !== row) {
           const index = this.queue.findIndex((element) => {
-            return JSON.stringify(element) === JSON.stringify([{ row: row, col: col }]) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
+            return JSON.stringify(element) === JSON.stringify({ row: row, col: col }) //kiểm tra xem vị trí này có trong queue chưa. nếu có rồi thì cập nhật lại vị trí trong queue
           })
           if (index >= 0) {
-            this.queue[index] = [{ row: emptyRow, col: col }]
+            this.queue[index] = { row: emptyRow, col: col }
           }
           this._swapCells([
             [emptyRow, col],
@@ -409,40 +426,86 @@ export class Main {
     const secondCell = this.getCellAt(second)
     if (firstCell instanceof SpecialCell && secondCell instanceof SpecialCell) {
       return true
+    } else if (firstCell instanceof DestroyCell || secondCell instanceof DestroyCell) {
+      return true
     }
     return false
   }
-  public handleComboSkillCommand(first: CellPosition, second: CellPosition): CellPosition[][] {
+  public handleComboSkillCommand(first: CellPosition, second: CellPosition): CellPosition[] {
     const firstCell = this.getCellAt(first)
     const secondCell = this.getCellAt(second)
     if (firstCell instanceof SpecialCell && secondCell instanceof SpecialCell) {
       const matches = this.comboSkillManager.handleCombo(firstCell, secondCell, this.handleComboSkill)
-      this.addCell(first, firstCell.resetNormalCell())
-      this.addCell(second, secondCell.resetNormalCell())
       return matches
+    } else {
+      /* Destroy với cell normal */
+      let positionTemp: CellPosition
+      let matches: number[][]
+      if (firstCell instanceof DestroyCell) {
+        this.preKey = secondCell.index
+        positionTemp = firstCell.getPosition()
+        matches = this.clearByKey()
+        firstCell.resetNormalCell()
+      } else if (secondCell instanceof DestroyCell) {
+        this.preKey = firstCell.index
+        positionTemp = secondCell.getPosition()
+        secondCell.resetNormalCell()
+        matches = this.clearByKey()
+      } else {
+        return []
+      }
+
+      matches.push([positionTemp.row, positionTemp.col])
+      return matches.flatMap((e) => [{ row: e[0], col: e[1] }])
     }
-    return []
   }
+
   /* Handle Combo Skill */
-  handleComboSkill = (first: SpecialCell, second: SpecialCell, comboType: ComboType): CellPosition[][] => {
-    let result: CellPosition[][] = []
+  handleComboSkill = (first: SpecialCell, second: SpecialCell, comboType: ComboType): CellPosition[] => {
+    let result: CellPosition[] = []
     switch (comboType) {
       case ComboType.BOMB_BOMB:
         console.log('BOMB_BOMB >>> Combo')
         result = this.doubleBomb(first, second)
+        this.addCell(first.getPosition(), first.resetNormalCell())
+        this.addCell(second.getPosition(), second.resetNormalCell())
         break
       case ComboType.LASER_LASER:
         console.log('LASER_LASER >>> Combo')
         result = this.doubleLaser(first, second)
+        this.addCell(first.getPosition(), first.resetNormalCell())
+        this.addCell(second.getPosition(), second.resetNormalCell())
         break
       case ComboType.DESTROY_DESTROY:
         console.log('DESTROY_DESTROY >>> Combo')
         break
       case ComboType.DESTROY_BOMB:
         console.log('DESTROY_BOMB >>> Combo')
+        if (first instanceof DestroyCell) {
+          this.preKey = second.index
+          result = this.destroyWithSpecial(second)
+        } else {
+          this.preKey = first.index
+          result = this.destroyWithSpecial(first)
+        }
+        first.isNew = false
+        second.isNew = false
+        result.push(first.getPosition())
+        result.push(second.getPosition())
         break
       case ComboType.DESTROY_LASER:
         console.log('DESTROY_LASER >>> Combo')
+        if (first instanceof DestroyCell) {
+          this.preKey = second.index
+          result = this.destroyWithSpecial(second)
+        } else {
+          this.preKey = first.index
+          result = this.destroyWithSpecial(first)
+        }
+        first.isNew = false
+        second.isNew = false
+        result.push(first.getPosition())
+        result.push(second.getPosition())
         break
       case ComboType.LASER_BOMB:
         console.log('LASER_BOMB >>> Combo')
@@ -451,6 +514,8 @@ export class Main {
         } else {
           result = this.laserWithBomb(second, first)
         }
+        this.addCell(first.getPosition(), first.resetNormalCell())
+        this.addCell(second.getPosition(), second.resetNormalCell())
         break
       default:
         break
@@ -460,9 +525,34 @@ export class Main {
   }
 
   /* Combo Skill */
-
+  private destroyWithSpecial(baseCell: BaseCell): CellPosition[] {
+    const matches: CellPosition[][] = []
+    if (this.preKey != null) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          const position = new CellPosition(i, j)
+          const cell = this.getCellAt(position)
+          if (CellName[this.preKey] === CellName[cell.index]) {
+            if (baseCell instanceof SpecialCell) {
+              if (baseCell.type.startsWith(CellType.LASER)) {
+                baseCell =
+                  (i + j) % 2 === 0
+                    ? new LaserColCell(baseCell.index, position, baseCell.attribute)
+                    : new LaserRowCell(baseCell.index, position, baseCell.attribute)
+                this.addCell(position, baseCell)
+              }
+              // baseCell.isNew = false
+              this.drawCell(position)
+            }
+            matches.push([position])
+          }
+        }
+      }
+    }
+    return matches.flatMap((e) => e)
+  }
   /* Double Bomb */
-  doubleBomb(first: SpecialCell, second: SpecialCell): CellPosition[][] {
+  doubleBomb(first: SpecialCell, second: SpecialCell): CellPosition[] {
     const { row, col } = first.getPosition()
     const indexs: CellPosition[][] = []
     const dx = [-1, 0, 1, 1, 1, 0, -1, -1, -2, 0, 2, 2, 2, 0, -2, -2]
@@ -476,21 +566,21 @@ export class Main {
     }
     // indexs.push([second.getPosition()])
     // this.addCell(second.getPosition(), new NormalCell(second.index, second.attribute))
-    return indexs
+    return indexs.flatMap((e) => e)
   }
 
   /* Double Laser */
-  doubleLaser(first: SpecialCell, second: SpecialCell): CellPosition[][] {
+  doubleLaser(first: SpecialCell, second: SpecialCell): CellPosition[] {
     const { row, col } = first.getPosition()
     const matches: CellPosition[][] = []
     this.getNumbers(18).map((e) => matches.push([{ row: row, col: e }])) /* xóa một dòng */
     this.getNumbers(10).map((e) => matches.push([{ row: e, col: col }])) /* xóa một cột */
     // matches.push([second.getPosition()])
     // this.addCell(second.getPosition(), new NormalCell(second.index, second.attribute))
-    return matches
+    return matches.flatMap((e) => e)
   }
   /* Laser with Bomb */
-  laserWithBomb(first: SpecialCell, second: SpecialCell): CellPosition[][] {
+  laserWithBomb(first: SpecialCell, second: SpecialCell): CellPosition[] {
     const { row, col } = first.getPosition()
     const matches: CellPosition[][] = []
     // this.getNumbersAroundCell(row, col)
@@ -507,7 +597,7 @@ export class Main {
     }
     // matches.push([second.getPosition()])
     // this.addCell(second.getPosition(), new NormalCell(second.index, second.attribute))
-    return matches
+    return matches.flatMap((e) => e)
   }
   /* >>>>>>>>>>>>>>>> END <<<<<<<<<<<<<<<<<<<<<<<< */
   /* Reset Flag isVisited */
@@ -538,11 +628,14 @@ export class Main {
     }
     return indexs
   }
-  #clearByKey() {
+  private clearByKey() {
+    if (this.preKey === null) {
+      return []
+    }
     const matches: number[][] = []
     for (let i = 0; i < 10; i++) {
       for (let j = 0; j < 18; j++) {
-        if (this.cells[i][j].index == this.preKey)
+        if (CellName[this.preKey] === CellName[this.cells[i][j].index])
           //thay 3 thành index
           matches.push([i, j])
       }
@@ -568,10 +661,10 @@ export class Main {
     console.log(`Xóa tất cả item ${srcCell.index} cùng màu với item tại (${position.row}, ${position.col})`)
     // Logic xóa item cùng loại
   }
-  getQueue() {
+  getQueue(): CellPosition[] {
     return this.queue
   }
-  setQueue(newValue: CellPosition[][]) {
+  setQueue(newValue: CellPosition[]) {
     this.queue = newValue
   }
 }

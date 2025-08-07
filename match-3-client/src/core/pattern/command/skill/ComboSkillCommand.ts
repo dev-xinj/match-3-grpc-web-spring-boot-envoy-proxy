@@ -6,7 +6,7 @@ export class ComboSkillCommand implements Command {
   private board: Main
   private first: CellPosition
   private second: CellPosition
-  private result: CellPosition[][] = []
+  private result: CellPosition[] = []
   constructor(board: Main, first: CellPosition, second: CellPosition) {
     this.board = board
     this.first = first

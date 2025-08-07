@@ -1,6 +1,9 @@
 import { CellApi } from '../api/models/CellApi.js'
 import { config } from '../constants/config.js'
+import { CellPosition } from '../core/main/CellPosition.js'
 import { Attribute } from '../core/models/BaseCell.js'
+import { BombCell } from '../core/models/BombCell.js'
+import { DestroyCell } from '../core/models/DestroyCell.js'
 import { NormalCell } from '../core/models/NormalCell.js'
 import { TYPECELL } from '../enums/TypeCell.js'
 
@@ -9,6 +12,12 @@ const cell = (index: number, type: TYPECELL) => {
 }
 const normalCell = (index: number) => {
   return new NormalCell(index, new Attribute(config.COLOR.default, config.COLOR.default))
+}
+const bombCell = (index: number, position: CellPosition) => {
+  return new BombCell(index, position, new Attribute(config.COLOR.default, config.COLOR.default))
+}
+const destroyCell = (index: number, position: CellPosition) => {
+  return new DestroyCell(index, position, new Attribute(config.COLOR.default, config.COLOR.default))
 }
 export function mockCellsAPIWithCombo() {
   const cells = [
@@ -424,8 +433,9 @@ export function mockCellsAPIWithDefault() {
 export function mockBaseCellsAPIWithDefault() {
   const cells = [
     [
-      normalCell(1),
-      normalCell(2),
+      /* 0 */
+      bombCell(1, new CellPosition(0, 0)),
+      destroyCell(6, new CellPosition(0, 1)),
       normalCell(1),
       normalCell(4),
       normalCell(2),
@@ -444,7 +454,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(3)
     ],
     [
-      normalCell(2),
+      /* 1 */ normalCell(2),
       normalCell(4),
       normalCell(2),
       normalCell(1),
@@ -464,7 +474,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(3)
     ],
     [
-      normalCell(3),
+      /*2 */ normalCell(3),
       normalCell(4),
       normalCell(4),
       normalCell(1),
@@ -484,7 +494,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(2)
     ],
     [
-      normalCell(4),
+      /* 3 */ normalCell(4),
       normalCell(4),
       normalCell(3),
       normalCell(2),
@@ -504,7 +514,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(1)
     ],
     [
-      normalCell(1),
+      /* 4 */ normalCell(1),
       normalCell(4),
       normalCell(1),
       normalCell(1),
@@ -524,7 +534,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(1)
     ],
     [
-      normalCell(2),
+      /* 5 */ normalCell(2),
       normalCell(3),
       normalCell(3),
       normalCell(2),
@@ -544,27 +554,27 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(4)
     ],
     [
+      /* 6 */ normalCell(3),
       normalCell(3),
       normalCell(3),
-      normalCell(3),
-      normalCell(1),
+      normalCell(2),
       normalCell(3),
       normalCell(3),
       normalCell(2),
       normalCell(1),
       normalCell(3),
       normalCell(1),
-      normalCell(1),
-      normalCell(1),
-      normalCell(1),
-      normalCell(1),
-      normalCell(1),
+      normalCell(4),
+      normalCell(2),
+      normalCell(5),
+      normalCell(3),
+      normalCell(2),
       normalCell(4),
       normalCell(3),
       normalCell(4)
     ],
     [
-      normalCell(4),
+      /* 7 */ normalCell(4),
       normalCell(3),
       normalCell(2),
       normalCell(1),
@@ -584,7 +594,7 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(3)
     ],
     [
-      normalCell(1),
+      /* 8 */ normalCell(1),
       normalCell(4),
       normalCell(2),
       normalCell(1),
@@ -604,23 +614,23 @@ export function mockBaseCellsAPIWithDefault() {
       normalCell(3)
     ],
     [
-      normalCell(1),
-      normalCell(1),
+      /* 9 */ normalCell(1),
+      normalCell(2),
       normalCell(2),
       normalCell(3),
       normalCell(1),
       normalCell(4),
-      normalCell(1),
+      normalCell(5),
       normalCell(2),
-      normalCell(1),
+      normalCell(4),
       normalCell(3),
       normalCell(1),
       normalCell(4),
-      normalCell(1),
-      normalCell(1),
+      normalCell(2),
+      normalCell(2),
       normalCell(4),
       normalCell(4),
-      normalCell(1),
+      normalCell(3),
       normalCell(3)
     ]
   ]

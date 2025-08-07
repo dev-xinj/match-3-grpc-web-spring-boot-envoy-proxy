@@ -8,8 +8,8 @@ export class DestroyWithLaserSkill implements ComboSkillStrategy {
     firstCell: SpecialCell,
     secondCell: SpecialCell,
     comboType: ComboType,
-    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[][]
-  ): CellPosition[][] {
+    callback: (firstCell: SpecialCell, secondCell: SpecialCell, comboType: ComboType) => CellPosition[]
+  ): CellPosition[] {
     console.log('DestroyWithLaser >>> active executed')
     return callback(firstCell, secondCell, comboType)
   }

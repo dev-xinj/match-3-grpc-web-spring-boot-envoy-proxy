@@ -3,10 +3,10 @@ import { Main } from '../../../main/Main'
 import { Command } from '../Command'
 
 export class ClearCommand implements Command {
-  private result: Promise<CellPosition[]>[] | null = null
+  private result: Promise<CellPosition[]> | null = null
   constructor(
     private board: Main,
-    private arrMatch: CellPosition[][]
+    private arrMatch: CellPosition[]
   ) {}
   async execute(): Promise<void> {
     console.log('ClearCommand >>>>> Execute()')
